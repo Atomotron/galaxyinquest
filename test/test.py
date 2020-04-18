@@ -70,7 +70,7 @@ class World(object):
 
 class Player(object):
     # So pos,vel, and acc ALL have 0 and 1 , e.g: pos[0] is X coordinates, so on.
-    def __init__(self, sprite, screen, pos, velocity, acc, planet1, planet2):
+    def __init__(self, sprite, screen, pos, velocity, acc, planetList):
         self.sprite = pygame.transform.rotate(sprite, -90)
         self.pos = pos
         self.velocity = velocity
@@ -82,17 +82,17 @@ class Player(object):
         self.mass = 1
         self.centerPos = (
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
-        self.planet1 = planet1
-        self.planet2 = planet2
+        self.planetList = planetList
 
     def draw(self):
         screen.blit(self.sprite, (self.centerPos[0], self.centerPos[1]))
 
-    def move(self):
+    def move(self,dt):
+        dt = dt/14
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_w]:
-            self.velocity[1] -= 0.1 * np.cos(self.rotation * 3.14 / 180)
-            self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180)
+            self.velocity[1] -= 0.1 * np.cos(self.rotation * 3.14 / 180) *dt
+            self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180) *dt
         if (self.velocity[0] <= (-1 * self.MaxVelocity)):
             self.velocity[0] = (-1 * self.MaxVelocity)
         if (self.velocity[1] <= (-1 * self.MaxVelocity)):
@@ -102,18 +102,19 @@ class Player(object):
         if (self.velocity[1] >= self.MaxVelocity):
             self.velocity[1] = self.MaxVelocity
         if pressed[pygame.K_d]:
-            self.rotation -= 3
+            self.rotation -= 3 *dt
             self.sprite = pygame.transform.rotate(self.sprite2, self.rotation)
         if pressed[pygame.K_a]:
-            self.rotation += 3
+            self.rotation += 3 *dt
             self.sprite = pygame.transform.rotate(self.sprite2, self.rotation)
 
-        self.velocity[0] += self.acc[0]
-        self.velocity[1] += self.acc[1]
-        self.pos[1] += self.velocity[1]
-        self.pos[0] += self.velocity[0]
+        self.velocity[0] += self.acc[0] *dt
+        self.velocity[1] += self.acc[1] *dt
+        self.pos[1] += self.velocity[1] *dt
+        self.pos[0] += self.velocity[0] *dt
 
-    def abuSalehBreaks(self):
+    def abuSalehBreaks(self,dt):
+        dt = dt / 14
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_s] and (abs(self.velocity[0]) > 0 or abs(self.velocity[1]) > 0):
             if abs(self.velocity[0]) <= 0.06:
@@ -121,15 +122,16 @@ class Player(object):
             if abs(self.velocity[1]) <= 0.06:
                 self.velocity[1] = 0
             if self.velocity[0] > 0:
-                self.velocity[0] -= 0.1
+                self.velocity[0] -= 0.1 *dt
             elif self.velocity[0] < 0:
-                self.velocity[0] += 0.1
+                self.velocity[0] += 0.1 *dt
             if self.velocity[1] > 0:
-                self.velocity[1] -= 0.1
+                self.velocity[1] -= 0.1 *dt
             elif self.velocity[1] < 0:
-                self.velocity[1] += 0.1
-
-    def GravityUpdater(self, X):
+                self.velocity[1] += 0.1 *dt
+        self.acc[0] = 0
+        self.acc[1] = 0
+    def gravityUpdater(self, X):
         planetAcc = [0, 0]
         xself = self.pos[0]
         yself = self.pos[1]
@@ -138,15 +140,18 @@ class Player(object):
         dist = np.sqrt(((xplanet - xself) ** 2) + ((yplanet - yself) ** 2))
         cos = (xplanet - xself) / dist
         sin = (yplanet - yself) / dist
-        planetAcc[0] = cos * (X.mass / dist)
-        planetAcc[1] = sin * (X.mass / dist)
+        planetAcc[0] = cos * (X.mass / (dist))
+        planetAcc[1] = sin * (X.mass / (dist))
         return planetAcc
 
-    def AccUpdater(self):
-        planetAcc = self.GravityUpdater(self.planet1)
-        planetAcc2 = self.GravityUpdater(self.planet2)
-        self.acc[0] = planetAcc[0] + planetAcc2[0]
-        self.acc[1] = planetAcc[1] + planetAcc2[1]
+    def accUpdater(self,dt):
+        dt = dt / 14
+        self.acc[0] = 0
+        self.acc[1] = 0
+        for i in range (len(self.planetList)):
+            planetAcc = self.gravityUpdater(self.planetList[i])
+            self.acc[0] += planetAcc[0] * dt
+            self.acc[1] += planetAcc[1] * dt
 
     def wrapAround(self):
 
@@ -162,15 +167,16 @@ class Player(object):
     def update(self):
         pressed = pygame.key.get_pressed()
         self.draw()
-        self.move()
-        self.abuSalehBreaks()
+        self.move(dt)
+        self.abuSalehBreaks(dt)
         self.wrapAround()
-        self.AccUpdater()
+        if not(pressed[pygame.K_s]):
+            self.accUpdater(dt)
         self.centerPos = (
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         if pressed[pygame.K_f]:
-            print(self.pos)
-            print(self.centerPos)
+            print(self.planetList)
+            print(self.GravityUpdater(self.planetList[0]))
 
 
 class Planet(object):
@@ -195,13 +201,13 @@ if __name__ == "__main__":
 
     clock = pygame.time.Clock()  # A clock to keep track of time
     world = World(background, screen.get_rect())
-    planet = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 5, 1, (500, 500))
-    planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 5, 1, (500, 20))
+    planet = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 5, 5, (500, 500))
+    planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 5, 5, (500, 20))
     player = Player(spritesheet.subsurface(source_rects["jet"]), screen, [(screenWidth / 2) - 25, screenHeight / 2],
-                    [(0), (0)], [0, 0], planet, planet2)
+                    [(0), (0)], [0, 0], [planet, planet2])
 
     while True:
-        clock.tick(60)  # If we go faster than 60fps, stop and wait.
+        dt = clock.tick(60)  # If we go faster than 60fps, stop and wait.
         for event in pygame.event.get():  # Get everything that's happening
             if event.type == QUIT:  # If someone presses the X button
                 pygame.quit()  # Shuts down the window
@@ -219,4 +225,3 @@ if __name__ == "__main__":
             'Velocity:' + str(player.velocity[1]))
 
         pygame.display.flip()
-
