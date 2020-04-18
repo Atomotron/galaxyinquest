@@ -74,9 +74,18 @@ class Player(object):
         self.acc = acc
         self.screen = screen
         self.MaxVelocity = 5
+        self.rotation=0
+        self.sprite2 = pygame.transform.rotate(sprite,-90)
         
+        
+        
+   
+
+    
     def draw(self):
-        screen.blit(self.sprite,self.pos)
+            tempPosX = self.pos[0] - self.sprite.get_rect().width // 2
+            tempPosY = self.pos[1] - self.sprite.get_rect().height // 2
+            screen.blit(self.sprite,(tempPosX,tempPosY))
         
     def move(self):
         pressed = pygame.key.get_pressed()
@@ -84,12 +93,20 @@ class Player(object):
             self.velocity[1] += 0.1
         if pressed[pygame.K_w] and self.velocity[1] >  (-1*self.MaxVelocity):
             self.velocity[1] -= 0.1
+            
+        if pressed[pygame.K_d]:
+            self.rotation-=1
+            self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
+            
+        if pressed[pygame.K_a]:
+            self.rotation+=1
+            self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
+            
+            
         self.pos[1] += self.velocity[1]
         
-
-def erase(rect): # Draw the background over an area to "erase" what's there.
-    screen.blit(background,rect.topleft,rect)
-    erase(screen.get_rect())
+        
+        
 
 if __name__ == "__main__":
     
