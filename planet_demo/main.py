@@ -19,8 +19,8 @@ class BiomeMap(object):
       subsurface = sheet.subsurface(rect)
       data = surfarray.array2d(subsurface)
       self.shifts = subsurface.get_shifts()
-      self.elevation = self.isolate_and_divide(data,self.shifts[0]).astype(dtype=np.uint32,casting="unsafe",copy=False)
-      self.temperature = self.isolate_and_divide(data,self.shifts[1]).astype(dtype=np.uint32,casting="unsafe",copy=False)
+      self.elevation = self.isolate_and_divide(data,self.shifts[0]).astype(dtype=np.int64,casting="unsafe",copy=False)
+      self.temperature = self.isolate_and_divide(data,self.shifts[1]).astype(dtype=np.int64,casting="unsafe",copy=False)
       self.alpha = np.bitwise_and(data,0xff << self.shifts[3]).astype(dtype=np.uint32,casting="unsafe",copy=False)
       self.scratch = data.copy()
       self.altered_temp = self.temperature.astype(dtype=np.int64,casting="unsafe")
@@ -49,7 +49,7 @@ class BiomeMap(object):
       np.clip(self.altered_temp,0,ColorMap.SHEET_SIZE-1,out=self.altered_temp)
       np.subtract(self.elevation,sealevel,out=self.altered_elevation)
       np.clip(self.altered_elevation,0,ColorMap.SHEET_SIZE-1,out=self.altered_elevation)
-      self.scratch[:] = colormap.colors[self.altered_elevation,self.altered_temp]
+      self.scratch[:] = colormap.colors[self.altered_temp,self.altered_elevation]
       np.bitwise_or(self.scratch.astype(dtype=np.uint32,casting="unsafe",copy=False),data,out=data)
    def make_surface(self):
       """Makes a surface ready to receive pixel data from stamp."""
@@ -58,7 +58,7 @@ class BiomeMap(object):
       
 class PlanetSprite(object):
    CANVAS_SIZE = (256,256)
-   def __init__(self,pos,biomemap,colormap,scale=1,omega=0,theta=0):
+   def __init__(self,pos,biomemap,colormap,scale=1,omega=0.01,theta=0):
       self.pos = pos
       self.theta = theta
       self.omega = omega
@@ -112,7 +112,7 @@ def update(templevel,sealevel,temperatures,elevations,alpha,terrain_map,planet_s
    d = c | (np.array(alpha,dtype=np.uint32) << shifts[3])
    planet_array[:] = np.array(d,dtype=np.uint32)
 
-psprite = load("terrain.png","planet.png",0,4)
+psprite = load("terrain.png","planet.png",0,1)
 clock = pygame.time.Clock()
 
 while True:
