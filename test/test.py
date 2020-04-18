@@ -61,9 +61,10 @@ class World(object):
             screen.blit(self.background,(0,0),rect)
         for thing in self.things:
             thing.draw(screen)
-
 #This is my class :D
-
+            
+            
+            
 class Player(object):
     #So pos,vel, and acc ALL have 0 and 1 , e.g: pos[0] is X coordinates, so on.
     def __init__(self,sprite,screen,pos,velocity,acc):
@@ -75,7 +76,9 @@ class Player(object):
         self.MaxVelocity = 5
         self.rotation = 0
         self.sprite2 = pygame.transform.rotate(sprite,-90)
-
+        
+    
+    
     def draw(self):
             tempPosX = self.pos[0] - self.sprite.get_rect().width // 2
             tempPosY = self.pos[1] - self.sprite.get_rect().height // 2
@@ -88,23 +91,20 @@ class Player(object):
             self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180)
         if (self.velocity[0] <= (-1 * self.MaxVelocity)):
             self.velocity[0] = (-1 * self.MaxVelocity)
-
         if (self.velocity[1] <= (-1 * self.MaxVelocity)):
             self.velocity[1] = (-1 * self.MaxVelocity)
-
         if (self.velocity[0] >= self.MaxVelocity):
             self.velocity[0] = self.MaxVelocity
-
         if (self.velocity[1] >= self.MaxVelocity):
             self.velocity[1] = self.MaxVelocity
-
         if pressed[pygame.K_d]:
             self.rotation-=3
-            self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
-            
+            self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)   
         if pressed[pygame.K_a]:
             self.rotation+=3
             self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
+
+        
             
         self.pos[1] += self.velocity[1]
         self.pos[0] += self.velocity[0]
@@ -114,49 +114,62 @@ class Player(object):
         if pressed[pygame.K_s] and (abs(self.velocity[0]) > 0 or abs(self.velocity[1]) > 0):
             if abs(self.velocity[0] ) <= 0.06:
                 self.velocity[0] = 0
-                
             if abs(self.velocity[1] ) <= 0.06:
-                self.velocity[1] = 0
-                
+                self.velocity[1] = 0   
             if self.velocity[0] > 0:
-                self.velocity[0] -= 0.1
-                
+                self.velocity[0] -= 0.1   
             elif self.velocity[0] < 0:
-                self.velocity[0] += 0.1
-                
+                self.velocity[0] += 0.1              
             if self.velocity[1] > 0:
-                self.velocity[1] -= 0.1
-                
+                self.velocity[1] -= 0.1  
             elif self.velocity[1] < 0:
                 self.velocity[1] += 0.1
-    def update(self):
-        self.move()
-        self.draw()
-        self.abuSalehBreaks()
-        self.wrapAround()
+            
     def wrapAround(self):
         
         if(self.pos[0] >= (screenWidth + 40)):
             self.pos[0]= -40
-        
         elif(self.pos[0] <= -40):
-            self.pos[0]= screenWidth + 40
-            
+            self.pos[0]= screenWidth + 40  
         if(self.pos[1] >= (screenHeight + 40)):
             self.pos[1]= -40
-        
         elif(self.pos[1] <= -40):
             self.pos[1] = screenHeight+40
+            
+    def update(self):
+        self.draw()
+        self.move()
+        self.abuSalehBreaks()
+        self.wrapAround()
         
-        
+   
+    
+class Planet(object):
+    def __init__(self,sprite,radius,mass,pos):
+        self.sprite = sprite
+        self.radius = radius
+        self.mass = mass
+        self.pos = pos
+        self.centerPos = (self.sprite.get_rect().width // 2, self.sprite.get_rect().height // 2)
+            
+            
+    def draw(self):
+        screen.blit(self.sprite,self.pos)
+            
+    def update(self):
+        self.draw()
+            
+
+
+    
 
 if __name__ == "__main__":
     
+    planetSprite =  pygame.image.load("../img/planetTest.png").convert_alpha()
+    
     clock = pygame.time.Clock() # A clock to keep track of time
     world = World(background,screen.get_rect())
-    
-    
-
+    planet = Planet(planetSprite.subsurface(pygame.Rect((0,0),(190,194))),5,1,(100,200))
     player = Player(spritesheet.subsurface(source_rects["jet"]),screen,[(screenWidth/2)-25,screenHeight/2],[(0),(0)],[0,0])
     
     while True:
@@ -168,9 +181,12 @@ if __name__ == "__main__":
             elif event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 exit()
+                
         world.draw(screen)
-
+        planet.update()
         player.update()
+        
+        
         pygame.display.set_caption(
             'Velocity:' + str(player.velocity[1]))
         
