@@ -163,21 +163,40 @@ class Player(object):
             self.pos[1] = -40
         elif (self.pos[1] <= -40):
             self.pos[1] = screenHeight + 40
-
-    def update(self):
+    def collide(self):
+        collided = False
+        for i in range (len(self.planetList)):
+            xself = self.pos[0]
+            yself = self.pos[1]
+            xplanet = self.planetList[i].centerPos[0]
+            yplanet = self.planetList[i].centerPos[1]
+            dist = np.sqrt(((xplanet - xself) ** 2) + ((yplanet - yself) ** 2))
+            cos = (xplanet - xself) / dist
+            sin = (yplanet - yself) / dist
+            if dist < self.planetList[i].radius:
+                collided = True
+                distx = (xplanet - xself)/dist
+                disty = (yplanet - yself) / dist
+                bounce = distx*self.velocity[0] + disty*self.velocity[1]
+                V2x = bounce*distx
+                V2y = bounce*disty
+                self.velocity[0] -=2*V2x
+                self.velocity[1] -=2*V2y
+        return collided
+    def update(self,dt):
         pressed = pygame.key.get_pressed()
+        collided = self.collide()
         self.draw()
-        self.move(dt)
         self.abuSalehBreaks(dt)
         self.wrapAround()
-        if not(pressed[pygame.K_s]):
+        if not(pressed[pygame.K_s]) and not collided:
             self.accUpdater(dt)
+        self.move(dt)
         self.centerPos = (
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         if pressed[pygame.K_f]:
             print(self.planetList)
-            print(self.GravityUpdater(self.planetList[0]))
-
+            print(self.gravityUpdater(self.planetList[0]))
 
 class Planet(object):
     def __init__(self, sprite, radius, mass, pos):
@@ -201,8 +220,8 @@ if __name__ == "__main__":
 
     clock = pygame.time.Clock()  # A clock to keep track of time
     world = World(background, screen.get_rect())
-    planet = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 5, 5, (500, 500))
-    planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 5, 5, (500, 20))
+    planet = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 10, (500, 500))
+    planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 10, (500, 20))
     player = Player(spritesheet.subsurface(source_rects["jet"]), screen, [(screenWidth / 2) - 25, screenHeight / 2],
                     [(0), (0)], [0, 0], [planet, planet2])
 
@@ -219,7 +238,7 @@ if __name__ == "__main__":
         world.draw(screen)
         planet.update()
         planet2.update()
-        player.update()
+        player.update(dt)
 
         pygame.display.set_caption(
             'Velocity:' + str(player.velocity[1]))
