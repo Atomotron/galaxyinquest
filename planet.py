@@ -61,8 +61,10 @@ class Cityscape(object):
    def __init__(self,spritesheet):
       self.spritesheet = spritesheet
       n_sprites = spritesheet.get_width() // self.SPRITE_SIZE[0]
+      self.n_techs = spritesheet.get_height() // (self.SPRITE_SIZE[1]*2)
       self.sprite_indices = np.random.randint(0,n_sprites,self.NUM_SLOTS)
       self.pop_bias = self.gen_bias()
+      self.tech_bias = self.gen_bias()
      
    def gen_bias(self,maximum=1.0):
       a = np.random.uniform(0,1.0,self.NUM_SLOTS)
@@ -74,10 +76,9 @@ class Cityscape(object):
       b *= maximum/np.max(b) # highest should be 1
       return b
       
-      
-   def stamp_building(self,surface,theta,index,day):
+   def stamp_building(self,surface,theta,index,day,tech):
       rect = pygame.Rect(
-         (index*self.SPRITE_SIZE[0],0 if day else self.SPRITE_SIZE[1]),
+         (index*self.SPRITE_SIZE[0],tech*self.SPRITE_SIZE[1]*2 + (0 if day else self.SPRITE_SIZE[1])),
          self.SPRITE_SIZE
          )
       radius = self.BASE_HEIGHT + self.SPRITE_SIZE[1]/2
@@ -94,7 +95,9 @@ class Cityscape(object):
          if self.pop_bias[i] > population:
             continue
          theta = dtheta*i
-         self.stamp_building(surface,theta,index,day)
+         tech_index = max(min(int(np.floor(self.tech_bias[i] + tech*(self.n_techs-1))),self.n_techs-1),0)
+         print(tech_index,self.n_techs)
+         self.stamp_building(surface,theta,index,day,tech_index)
          
 
 class PlanetSprite(object):
@@ -120,11 +123,11 @@ class PlanetSprite(object):
       self.biomemap.stamp(sealevel,templevel,self.colormap,self.planet_sprite)
       # Day
       self.day_canvas.fill((0,0,0,0))
-      self.cityscape.stamp(self.day_canvas,True,population)
+      self.cityscape.stamp(self.day_canvas,True,population,tech)
       self.blit_centered(self.day_canvas,self.planet_sprite,self.planet_sprite.get_rect())
       # Night
       self.night_canvas.fill((0,0,0,0))
-      self.cityscape.stamp(self.night_canvas,False,population)
+      self.cityscape.stamp(self.night_canvas,False,population,tech)
       self.blit_centered(self.night_canvas,self.planet_sprite,self.planet_sprite.get_rect())
    def draw(self,surface):
       day = pygame.transform.rotozoom(self.day_canvas,self.theta,self.scale)
@@ -177,19 +180,19 @@ if __name__ == "__main__":
                pygame.quit()
                exit()
             elif event.key == K_SPACE:
-               psprite = load("terrain.png","planet.png",cindex,bindex)
+               psprite = load("img/terrain.png","img/planet.png",cindex,bindex)
             elif event.key == K_UP:
                cindex = (cindex+1) % 16
-               psprite = load("terrain.png","planet.png",cindex,bindex)
+               psprite = load("img/terrain.png","img/planet.png",cindex,bindex)
             elif event.key == K_DOWN:
                cindex = (cindex-1) % 16
-               psprite = load("terrain.png","planet.png",cindex,bindex)
+               psprite = load("img/terrain.png","img/planet.png",cindex,bindex)
             elif event.key == K_LEFT:
                bindex = (bindex-1) % 5
-               psprite = load("terrain.png","planet.png",cindex,bindex)
+               psprite = load("img/terrain.png","img/planet.png",cindex,bindex)
             elif event.key == K_RIGHT:
                bindex = (bindex+1) % 5
-               psprite = load("terrain.png","planet.png",cindex,bindex)
+               psprite = load("img/terrain.png","img/planet.png",cindex,bindex)
             report = "Colormap {}, biome map {}".format(cindex,bindex)
             text = font.render(report, True, (255,255,255))
       pressed = pygame.key.get_pressed()
