@@ -4,6 +4,7 @@ from pygame.locals import *
 import pygame.surfarray as surfarray
 import numpy as np
 
+pygame.init()
 screen = pygame.display.set_mode((256,256))
 
 class ColorMap(object):
@@ -121,6 +122,11 @@ def update(templevel,sealevel,temperatures,elevations,alpha,terrain_map,planet_s
 psprite = load("terrain.png","planet.png",0,1)
 clock = pygame.time.Clock()
 
+cindex = 0
+bindex = 1
+report = "Colormap {}, biome map {}".format(cindex,bindex)
+font = pygame.font.Font('LiberationSans-Regular.ttf', 12)  
+text = font.render(report, True, (255,255,255))
 while True:
    dt = clock.tick(30)
    for event in pygame.event.get():
@@ -131,8 +137,22 @@ while True:
          if event.key == K_ESCAPE:
             pygame.quit()
             exit()
-         if event.key == K_SPACE:
-            psprite = load("terrain.png","planet.png",0,0)
+         elif event.key == K_SPACE:
+            psprite = load("terrain.png","planet.png",cindex,bindex)
+         elif event.key == K_UP:
+            cindex = (cindex+1) % 16
+            psprite = load("terrain.png","planet.png",cindex,bindex)
+         elif event.key == K_DOWN:
+            cindex = (cindex-1) % 16
+            psprite = load("terrain.png","planet.png",cindex,bindex)
+         elif event.key == K_LEFT:
+            bindex = (bindex-1) % 5
+            psprite = load("terrain.png","planet.png",cindex,bindex)
+         elif event.key == K_RIGHT:
+            bindex = (bindex+1) % 5
+            psprite = load("terrain.png","planet.png",cindex,bindex)
+         report = "Colormap {}, biome map {}".format(cindex,bindex)
+         text = font.render(report, True, (255,255,255))
    psprite.tick(dt)
    sealevel,templevel = pygame.mouse.get_pos()
    templevel = (templevel - 128) / 128
@@ -140,5 +160,6 @@ while True:
    screen.fill((0,0,0))
    psprite.set_parameters(sealevel,templevel) 
    psprite.draw(screen)
+   screen.blit(text,(0,0))
    pygame.display.flip()
    
