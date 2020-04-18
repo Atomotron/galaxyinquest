@@ -90,22 +90,20 @@ class Player(object):
     def move(self):
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_w]:
-            
-            if(self.velocity[0] >= (1*self.MaxVelocity)):
-                self.velocity[0] = (-1*self.MaxVelocity)
-                
-            if(self.velocity[1] <= (-1*self.MaxVelocity)):
-                self.velocity[1] = (-1*self.MaxVelocity)
-                
-            if(self.velocity[0] >= self.MaxVelocity):
-                self.velocity[0] = self.MaxVelocity
-                
-            if(self.velocity[0] >= self.MaxVelocity):
-                self.velocity[0] = self.MaxVelocity
-                
-            else:
-                self.velocity[1] -= 0.1*np.cos(self.rotation * 3.14/180)
-                self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180)
+            self.velocity[1] -= 0.1*np.cos(self.rotation * 3.14/180)
+            self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180)
+        if (self.velocity[0] <= (-1 * self.MaxVelocity)):
+            self.velocity[0] = (-1 * self.MaxVelocity)
+
+        if (self.velocity[1] <= (-1 * self.MaxVelocity)):
+            self.velocity[1] = (-1 * self.MaxVelocity)
+
+        if (self.velocity[0] >= self.MaxVelocity):
+            self.velocity[0] = self.MaxVelocity
+
+        if (self.velocity[1] >= self.MaxVelocity):
+            self.velocity[1] = self.MaxVelocity
+
         if pressed[pygame.K_d]:
             self.rotation-=3
             self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
