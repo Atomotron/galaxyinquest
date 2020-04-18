@@ -58,13 +58,14 @@ class BiomeMap(object):
       
 class PlanetSprite(object):
    CANVAS_SIZE = (256,256)
-   def __init__(self,pos,biomemap,colormap,scale=1,omega=0.01,theta=0):
+   def __init__(self,pos,biomemap,colormap,shadow,scale=1,omega=0.01,theta=0):
       self.pos = pos
       self.theta = theta
       self.omega = omega
       self.scale = scale
       self.colormap = colormap
       self.biomemap = biomemap
+      self.shadow = shadow
       
       self.day_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.night_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
@@ -78,28 +79,33 @@ class PlanetSprite(object):
       # Day
       self.blit_centered(self.day_canvas,self.planet_sprite,self.planet_sprite.get_rect())
       # Night
-      self.night_canvas.fill((255,0,0))
       self.blit_centered(self.night_canvas,self.planet_sprite,self.planet_sprite.get_rect())
    def draw(self,surface):
       day = pygame.transform.rotozoom(self.day_canvas,self.theta,self.scale)
       night = pygame.transform.rotozoom(self.night_canvas,self.theta,self.scale)
       day_pos = (
-         self.pos[0] - day.get_width()//2,
-         self.pos[1] - day.get_height()//2,
-      )
-      surface.blit(day,day_pos,pygame.Rect(0,0,day.get_width()//2,day.get_height()) )
-      night_pos = (
          self.pos[0],
          self.pos[1] - night.get_height()//2,
       )
-      surface.blit(night,night_pos,pygame.Rect(day.get_width()//2,0,day.get_width()//2,day.get_height()) )
+      surface.blit(day,day_pos,pygame.Rect(day.get_width()//2,0,day.get_width()//2,day.get_height()) )
+      night_pos = (
+         self.pos[0] - day.get_width()//2,
+         self.pos[1] - day.get_height()//2,
+      )
+      surface.blit(night,night_pos,pygame.Rect(0,0,day.get_width()//2,day.get_height()) )
+      shadow_pos = (
+         self.pos[0] - self.shadow.get_width()//2,
+         self.pos[1] - self.shadow.get_height()//2,
+      )
+      surface.blit(self.shadow,shadow_pos)
 
 def load(tfile,pfile,cindex,bindex):
    color_sheet = pygame.image.load(tfile).convert_alpha()
    biomes_sheet = pygame.image.load(pfile).convert_alpha()
+   shadow = pygame.image.load("shadow.png").convert_alpha()
    cmap = ColorMap(color_sheet,pygame.Rect(cindex*ColorMap.SHEET_SIZE,0,ColorMap.SHEET_SIZE,ColorMap.SHEET_SIZE))
    bmap = BiomeMap(biomes_sheet,pygame.Rect(bindex*160,0,160,160))
-   psprite = PlanetSprite((128,128),bmap,cmap)
+   psprite = PlanetSprite((128,128),bmap,cmap,shadow)
    return psprite
    
 def update(templevel,sealevel,temperatures,elevations,alpha,terrain_map,planet_surface):
