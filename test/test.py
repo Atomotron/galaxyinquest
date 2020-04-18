@@ -99,8 +99,16 @@ class Player(object):
         if pressed[pygame.K_a]:
             self.rotation+=3
             self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
-            
-            
+
+        if pressed[pygame.K_s] and (abs(self.velocity[0]) > 0 or abs(self.velocity[1]) > 0):
+            if self.velocity[0] > 0:
+                self.velocity[0] -= 0.1
+            elif self.velocity[0] < 0:
+                self.velocity[0] += 0.1
+            if self.velocity[1] > 0:
+                self.velocity[1] -= 0.1
+            elif self.velocity[1] < 0:
+                self.velocity[1] += 0.1
         self.wrapAround()
             
         self.pos[1] += self.velocity[1]
@@ -112,13 +120,13 @@ class Player(object):
         if(self.pos[0] >= (screenWidth + 40)):
             self.pos[0]= -40
         
-        if(self.pos[0] <= -40):
+        elif(self.pos[0] <= -40):
             self.pos[0]= screenWidth + 40
             
         if(self.pos[1] >= (screenHeight + 40)):
             self.pos[1]= -40
         
-        if(self.pos[1] <= -40):
+        elif(self.pos[1] <= -40):
             self.pos[1] = screenHeight+40
         
         
