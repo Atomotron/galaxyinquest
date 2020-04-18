@@ -113,8 +113,7 @@ class Player(object):
             
         self.pos[1] += self.velocity[1]
         self.pos[0] += self.velocity[0]
-        
-        
+         
     def wrapAround(self):
         
         if(self.pos[0] >= (screenWidth + 40)):
