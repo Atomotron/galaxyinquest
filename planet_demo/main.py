@@ -58,13 +58,26 @@ class BiomeMap(object):
       return pygame.Surface(size,SRCALPHA,32)
 
 class Cityscape(object):
-   SPRITE_SIZE = (20,100)
+   SPRITE_SIZE = (20,50)
    BASE_HEIGHT = 80-3
    NUM_SLOTS = 360//10
    def __init__(self,spritesheet):
       self.spritesheet = spritesheet
       n_sprites = spritesheet.get_width() // self.SPRITE_SIZE[0]
       self.sprite_indices = np.random.randint(0,n_sprites,self.NUM_SLOTS)
+      self.pop_bias = self.gen_bias()
+     
+   def gen_bias(self,maximum=1.0):
+      a = np.random.uniform(0,1.0,self.NUM_SLOTS)
+      # blur
+      b = a.copy()
+      b += 0.5*np.roll(b,1)
+      b += 0.5*np.roll(b,-1)
+      b -= np.min(b) # lowest should be 0
+      b *= maximum/np.max(b) # highest should be 1
+      return b
+      
+      
    def stamp_building(self,surface,theta,index,day):
       rect = pygame.Rect(
          (index*self.SPRITE_SIZE[0],0 if day else self.SPRITE_SIZE[1]),
@@ -81,13 +94,15 @@ class Cityscape(object):
    def stamp(self,surface,day=True,population=0,tech=0):
       dtheta = 360 / self.NUM_SLOTS
       for i,index in enumerate(self.sprite_indices):
+         if self.pop_bias[i] > population:
+            continue
          theta = dtheta*i
          self.stamp_building(surface,theta,index,day)
          
 
 class PlanetSprite(object):
    CANVAS_SIZE = (256,256)
-   def __init__(self,pos,biomemap,colormap,city_spritesheet,shadow,scale=1,omega=0.01,theta=0):
+   def __init__(self,pos,biomemap,colormap,city_spritesheet,shadow,scale=1,omega=0.005,theta=0):
       self.pos = pos
       self.theta = theta
       self.omega = omega
@@ -104,13 +119,15 @@ class PlanetSprite(object):
       self.theta += self.omega * dt
    def blit_centered(self,dst,src,src_rect):
       dst.blit(src,(dst.get_width()//2 - src_rect.width//2,dst.get_height()//2 - src_rect.height//2),src_rect)
-   def set_parameters(self,sealevel,templevel):
+   def set_parameters(self,sealevel,templevel,population,tech):
       self.biomemap.stamp(sealevel,templevel,self.colormap,self.planet_sprite)
       # Day
-      self.cityscape.stamp(self.day_canvas,True)
+      self.day_canvas.fill((0,0,0,0))
+      self.cityscape.stamp(self.day_canvas,True,population)
       self.blit_centered(self.day_canvas,self.planet_sprite,self.planet_sprite.get_rect())
       # Night
-      self.cityscape.stamp(self.night_canvas,False)
+      self.night_canvas.fill((0,0,0,0))
+      self.cityscape.stamp(self.night_canvas,False,population)
       self.blit_centered(self.night_canvas,self.planet_sprite,self.planet_sprite.get_rect())
    def draw(self,surface):
       day = pygame.transform.rotozoom(self.day_canvas,self.theta,self.scale)
@@ -131,6 +148,8 @@ class PlanetSprite(object):
       )
       surface.blit(self.shadow,shadow_pos)
 
+
+clock = pygame.time.Clock()
 def load(tfile,pfile,cindex,bindex):
    color_sheet = pygame.image.load(tfile).convert_alpha()
    biomes_sheet = pygame.image.load(pfile).convert_alpha()
@@ -140,26 +159,14 @@ def load(tfile,pfile,cindex,bindex):
    bmap = BiomeMap(biomes_sheet,pygame.Rect(bindex*160,0,160,160))
    psprite = PlanetSprite((128,128),bmap,cmap,city,shadow)
    return psprite
-   
-def update(templevel,sealevel,temperatures,elevations,alpha,terrain_map,planet_surface):
-   shifts = planet_surface.get_shifts()
-   planet_array = pygame.surfarray.pixels2d(planet_surface)
-   colors = terrain_map[np.clip(temperatures-templevel,0,127),np.clip(elevations-sealevel,0,127)]
-   a = np.array(colors[:,:,0],dtype=np.uint32) << shifts[0]
-   b = a | (np.array(colors[:,:,1],dtype=np.uint32) << shifts[1])
-   c = b | (np.array(colors[:,:,2],dtype=np.uint32) << shifts[2])
-   d = c | (np.array(alpha,dtype=np.uint32) << shifts[3])
-   planet_array[:] = np.array(d,dtype=np.uint32)
-
 psprite = load("terrain.png","planet.png",0,1)
-clock = pygame.time.Clock()
-
 cindex = 0
 bindex = 1
 report = "Colormap {}, biome map {}".format(cindex,bindex)
 font = pygame.font.Font('LiberationSans-Regular.ttf', 12)  
 text = font.render(report, True, (255,255,255))
-psprite.set_parameters(0,0)
+population = 0.5
+tech = 0.5
 while True:
    dt = clock.tick(30)
    for event in pygame.event.get():
@@ -186,13 +193,23 @@ while True:
             psprite = load("terrain.png","planet.png",cindex,bindex)
          report = "Colormap {}, biome map {}".format(cindex,bindex)
          text = font.render(report, True, (255,255,255))
+   pressed = pygame.key.get_pressed()
+   if pressed[K_w]:
+      population += 0.001*dt
+   if pressed[K_s]:
+      population -= 0.001*dt
+   if pressed[K_a]:
+      tech -= 0.001*dt
+   if pressed[K_d]:
+      tech += 0.001*dt
    psprite.tick(dt)
    sealevel,templevel = pygame.mouse.get_pos()
    templevel = (templevel - 128) / 128
    sealevel = (sealevel - 128) / 128
    screen.fill((0,0,0))
-   #psprite.set_parameters(sealevel,templevel) 
+   psprite.set_parameters(sealevel,templevel,population,tech) 
    psprite.draw(screen)
+   pygame.draw.circle(screen,(255,0,255),(int(population*256),int(tech*256)),4)
    screen.blit(text,(0,0))
    pygame.display.flip()
    
