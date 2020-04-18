@@ -152,17 +152,17 @@ if __name__ == "__main__":
    def load(tfile,pfile,cindex,bindex):
       color_sheet = pygame.image.load(tfile).convert_alpha()
       biomes_sheet = pygame.image.load(pfile).convert_alpha()
-      shadow = pygame.image.load("shadow.png").convert_alpha()
-      city = pygame.image.load("cityscapes.png").convert_alpha()
+      shadow = pygame.image.load("img/shadow_outline.png").convert_alpha()
+      city = pygame.image.load("img/cityscapes.png").convert_alpha()
       cmap = ColorMap(color_sheet,pygame.Rect(cindex*ColorMap.SHEET_SIZE,0,ColorMap.SHEET_SIZE,ColorMap.SHEET_SIZE))
       bmap = BiomeMap(biomes_sheet,pygame.Rect(bindex*160,0,160,160))
       psprite = PlanetSprite((128,128),bmap,cmap,city,shadow)
       return psprite
-   psprite = load("terrain.png","planet.png",0,1)
+   psprite = load("img/terrain.png","img/planet.png",0,1)
    cindex = 0
    bindex = 1
    report = "Colormap {}, biome map {}".format(cindex,bindex)
-   font = pygame.font.Font('LiberationSans-Regular.ttf', 12)  
+   font = pygame.font.Font('img/LiberationSans-Regular.ttf', 12)  
    text = font.render(report, True, (255,255,255))
    population = 0.5
    tech = 0.5
