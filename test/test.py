@@ -10,7 +10,7 @@ screenWidth=1024
 screenHeight=768
 screen = pygame.display.set_mode((screenWidth,screenHeight))
 #Load Pictures
-background = pygame.image.load("../img/PyBgrd1_Plains.png").convert_alpha()
+background = pygame.image.load("../img/wow.png").convert_alpha()
 player_sheet = pygame.image.load("../img/spritecolor_v2.png").convert_alpha()
 spritesheet = pygame.image.load("../img/sprites.png").convert_alpha()
 source_rects = {
@@ -74,22 +74,87 @@ class Player(object):
         self.acc = acc
         self.screen = screen
         self.MaxVelocity = 5
+        self.rotation = 0
+        self.sprite2 = pygame.transform.rotate(sprite,-90)
         
+        
+        
+   
+
+    
     def draw(self):
-        screen.blit(self.sprite,self.pos)
+            tempPosX = self.pos[0] - self.sprite.get_rect().width // 2
+            tempPosY = self.pos[1] - self.sprite.get_rect().height // 2
+            screen.blit(self.sprite,(tempPosX,tempPosY))
         
     def move(self):
         pressed = pygame.key.get_pressed()
-        if pressed[pygame.K_s] and self.velocity[1] < +self.MaxVelocity:
-            self.velocity[1] += 0.1
-        if pressed[pygame.K_w] and self.velocity[1] >  (-1*self.MaxVelocity):
-            self.velocity[1] -= 0.1
-        self.pos[1] += self.velocity[1]
-        
+        if pressed[pygame.K_w]:
+            self.velocity[1] -= 0.1*np.cos(self.rotation * 3.14/180)
+            self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180)
+        if (self.velocity[0] <= (-1 * self.MaxVelocity)):
+            self.velocity[0] = (-1 * self.MaxVelocity)
 
-def erase(rect): # Draw the background over an area to "erase" what's there.
-    screen.blit(background,rect.topleft,rect)
-    erase(screen.get_rect())
+        if (self.velocity[1] <= (-1 * self.MaxVelocity)):
+            self.velocity[1] = (-1 * self.MaxVelocity)
+
+        if (self.velocity[0] >= self.MaxVelocity):
+            self.velocity[0] = self.MaxVelocity
+
+        if (self.velocity[1] >= self.MaxVelocity):
+            self.velocity[1] = self.MaxVelocity
+
+        if pressed[pygame.K_d]:
+            self.rotation-=3
+            self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
+            
+        if pressed[pygame.K_a]:
+            self.rotation+=3
+            self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
+
+        self.abuSalehBreaks()
+        self.wrapAround()
+            
+        self.pos[1] += self.velocity[1]
+        self.pos[0] += self.velocity[0]
+        
+    def abuSalehBreaks(self):
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_s] and (abs(self.velocity[0]) > 0 or abs(self.velocity[1]) > 0):
+            if abs(self.velocity[0] ) <= 0.06:
+                self.velocity[0] = 0
+                
+            if abs(self.velocity[1] ) <= 0.06:
+                self.velocity[1] = 0
+                
+            if self.velocity[0] > 0:
+                self.velocity[0] -= 0.1
+                
+            elif self.velocity[0] < 0:
+                self.velocity[0] += 0.1
+                
+            if self.velocity[1] > 0:
+                self.velocity[1] -= 0.1
+                
+            elif self.velocity[1] < 0:
+                self.velocity[1] += 0.1
+        
+         
+    def wrapAround(self):
+        
+        if(self.pos[0] >= (screenWidth + 40)):
+            self.pos[0]= -40
+        
+        elif(self.pos[0] <= -40):
+            self.pos[0]= screenWidth + 40
+            
+        if(self.pos[1] >= (screenHeight + 40)):
+            self.pos[1]= -40
+        
+        elif(self.pos[1] <= -40):
+            self.pos[1] = screenHeight+40
+        
+        
 
 if __name__ == "__main__":
     
