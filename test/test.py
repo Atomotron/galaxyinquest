@@ -66,6 +66,7 @@ class World(object):
             
             
 class Player(object):
+    #So pos,vel, and acc ALL have 0 and 1 , e.g: pos[0] is X coordinates, so on.
     def __init__(self,sprite,screen,pos,velocity,acc):
         self.sprite = pygame.transform.rotate(sprite,-90)
         self.pos = pos
@@ -79,10 +80,10 @@ class Player(object):
     def move(self):
          pressed = pygame.key.get_pressed()
          if pressed[pygame.K_s]:
-            self.pos[1] += 5
+            self.velocity[0] += 5
          elif pressed[pygame.K_w]:
-            self.pos[1] -= 5
-        
+            self.velocity[0] -= 5
+         self.pos[0] += self.velocity
         
 
 def erase(rect): # Draw the background over an area to "erase" what's there.
@@ -96,7 +97,7 @@ if __name__ == "__main__":
     
     
 
-    player = Player(spritesheet.subsurface(source_rects["jet"]),screen,[(screenWidth/2)-25,screenHeight/2],0,0)
+    player = Player(spritesheet.subsurface(source_rects["jet"]),screen,[(screenWidth/2)-25,screenHeight/2],[(0),(0)],[0,0])
     
     while True:
         clock.tick(60) # If we go faster than 60fps, stop and wait.
