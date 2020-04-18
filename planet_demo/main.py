@@ -122,9 +122,11 @@ class PlanetSprite(object):
    def set_parameters(self,sealevel,templevel,population,tech):
       self.biomemap.stamp(sealevel,templevel,self.colormap,self.planet_sprite)
       # Day
+      self.day_canvas.fill((0,0,0,0))
       self.cityscape.stamp(self.day_canvas,True,population)
       self.blit_centered(self.day_canvas,self.planet_sprite,self.planet_sprite.get_rect())
       # Night
+      self.night_canvas.fill((0,0,0,0))
       self.cityscape.stamp(self.night_canvas,False,population)
       self.blit_centered(self.night_canvas,self.planet_sprite,self.planet_sprite.get_rect())
    def draw(self,surface):
@@ -146,9 +148,18 @@ class PlanetSprite(object):
       )
       surface.blit(self.shadow,shadow_pos)
 
-psprite = load("terrain.png","planet.png",0,1)
-clock = pygame.time.Clock()
 
+clock = pygame.time.Clock()
+def load(tfile,pfile,cindex,bindex):
+   color_sheet = pygame.image.load(tfile).convert_alpha()
+   biomes_sheet = pygame.image.load(pfile).convert_alpha()
+   shadow = pygame.image.load("shadow.png").convert_alpha()
+   city = pygame.image.load("cityscapes.png").convert_alpha()
+   cmap = ColorMap(color_sheet,pygame.Rect(cindex*ColorMap.SHEET_SIZE,0,ColorMap.SHEET_SIZE,ColorMap.SHEET_SIZE))
+   bmap = BiomeMap(biomes_sheet,pygame.Rect(bindex*160,0,160,160))
+   psprite = PlanetSprite((128,128),bmap,cmap,city,shadow)
+   return psprite
+psprite = load("terrain.png","planet.png",0,1)
 cindex = 0
 bindex = 1
 report = "Colormap {}, biome map {}".format(cindex,bindex)
@@ -184,13 +195,13 @@ while True:
          text = font.render(report, True, (255,255,255))
    pressed = pygame.key.get_pressed()
    if pressed[K_w]:
-      population += 0.01*dt
+      population += 0.001*dt
    if pressed[K_s]:
-      population -= 0.01*dt
+      population -= 0.001*dt
    if pressed[K_a]:
-      tech -= 0.01*dt
+      tech -= 0.001*dt
    if pressed[K_d]:
-      tech += 0.01*dt
+      tech += 0.001*dt
    psprite.tick(dt)
    sealevel,templevel = pygame.mouse.get_pos()
    templevel = (templevel - 128) / 128
@@ -198,7 +209,7 @@ while True:
    screen.fill((0,0,0))
    psprite.set_parameters(sealevel,templevel,population,tech) 
    psprite.draw(screen)
-   pygame.draw.circle(screen,(int(population*256),int(tech*256)),(255,0,255),4)
+   pygame.draw.circle(screen,(255,0,255),(int(population*256),int(tech*256)),4)
    screen.blit(text,(0,0))
    pygame.display.flip()
    
