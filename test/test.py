@@ -74,7 +74,7 @@ class Player(object):
         self.acc = acc
         self.screen = screen
         self.MaxVelocity = 5
-        self.rotation=0
+        self.rotation = 0
         self.sprite2 = pygame.transform.rotate(sprite,-90)
         
         
@@ -93,17 +93,33 @@ class Player(object):
             self.velocity[1] -= 0.1*np.cos(self.rotation * 3.14/180)
             self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180)
         if pressed[pygame.K_d]:
-            self.rotation-=1
+            self.rotation-=3
             self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
             
         if pressed[pygame.K_a]:
-            self.rotation+=1
+            self.rotation+=3
             self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
             
+            
+        self.wrapAround()
             
         self.pos[1] += self.velocity[1]
         self.pos[0] += self.velocity[0]
         
+        
+    def wrapAround(self):
+        
+        if(self.pos[0] >= (screenWidth + 40)):
+            self.pos[0]= -40
+        
+        if(self.pos[0] <= -40):
+            self.pos[0]= screenWidth + 40
+            
+        if(self.pos[1] >= (screenHeight + 40)):
+            self.pos[1]= -40
+        
+        if(self.pos[1] <= -40):
+            self.pos[1] = screenHeight+40
         
         
 
