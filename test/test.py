@@ -74,6 +74,7 @@ class Player(object):
         self.acc = acc
         self.screen = screen
         self.MaxVelocity = 5
+        
     def draw(self):
         screen.blit(self.sprite,self.pos)
         
@@ -81,7 +82,7 @@ class Player(object):
         pressed = pygame.key.get_pressed()
         if pressed[pygame.K_s] and self.velocity[1] < +self.MaxVelocity:
             self.velocity[1] += 0.1
-        elif pressed[pygame.K_w] and self.velocity[1] < -self.MaxVelocity:
+        if pressed[pygame.K_w] and self.velocity[1] >  (-1*self.MaxVelocity):
             self.velocity[1] -= 0.1
         self.pos[1] += self.velocity[1]
         
