@@ -77,9 +77,9 @@ class Player(object):
         self.rotation = 0
         self.sprite2 = pygame.transform.rotate(sprite,-90)
         self.mass = 1
+        self.centerPos = (self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         self.planet1 = planet1
         self.planet2 = planet2
-        self.centerPos = (self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
     def draw(self):
             screen.blit(self.sprite,(self.centerPos[0],self.centerPos[1]))
         
@@ -124,9 +124,23 @@ class Player(object):
                 self.velocity[1] -= 0.1
             elif self.velocity[1] < 0:
                 self.velocity[1] += 0.1
-    def GravityUpdater(self):
-        self.acc[0] = self.planet1.planetAcc[0] + self.planet2.planetAcc[0]
-        self.acc[1] = self.planet1.planetAcc[1] + self.planet2.planetAcc[1]
+    def GravityUpdater(self,X):
+        planetAcc = [0,0]
+        xself = self.pos[0]
+        yself = self.pos[1]
+        xplanet = X.centerPos[0]
+        yplanet = X.centerPos[1]
+        dist = np.sqrt(((xplanet-xself)**2) + ((yplanet-yself)**2))
+        cos = (xplanet-xself)/dist
+        sin = (yplanet-yself)/dist
+        planetAcc[0] = cos*(X.mass/dist)
+        planetAcc[1] = sin*(X.mass/dist)
+        return planetAcc
+    def AccUpdater(self):
+        planetAcc = self.GravityUpdater(self.planet1)
+        planetAcc2 = self.GravityUpdater(self.planet2)
+        self.acc[0] = planetAcc[0] + planetAcc2[0]
+        self.acc[1] = planetAcc[1] + planetAcc2[1]
     def wrapAround(self):
         
         if(self.pos[0] >= (screenWidth + 40)):
@@ -144,37 +158,25 @@ class Player(object):
         self.move()
         self.abuSalehBreaks()
         self.wrapAround()
-        self.GravityUpdater()
+        self.AccUpdater()
         self.centerPos = (self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         if pressed[pygame.K_f]:
             print(self.pos)
             print(self.centerPos)
 class Planet(object):
-    def __init__(self,sprite,radius,mass,pos,player):
+    def __init__(self,sprite,radius,mass,pos):
         self.sprite = sprite
         self.radius = radius
         self.mass = mass
         self.pos = pos
         self.centerPos = (self.pos[0] + self.sprite.get_rect().width // 2, self.pos[1] + self.sprite.get_rect().height // 2)
-        self.player = player
-        self.planetAcc = [0,0]
-    def GravityUpdater(self):
-        xself = self.player.pos[0]
-        yself = self.player.pos[1]
-        xplanet = self.centerPos[0]
-        yplanet = self.centerPos[1]
-        dist = np.sqrt(((xplanet-xself)**2) + ((yplanet-yself)**2))
-        cos = (xplanet-xself)/dist
-        sin = (yplanet-yself)/dist
-        self.planetAcc[0] = cos*(self.mass/dist)
-        self.planetAcc[1] = sin*(self.mass/dist)
+
             
     def draw(self):
         screen.blit(self.sprite,self.pos)
             
     def update(self):
         self.draw()
-        self.GravityUpdater()
 
 
     
@@ -185,8 +187,8 @@ if __name__ == "__main__":
     
     clock = pygame.time.Clock() # A clock to keep track of time
     world = World(background,screen.get_rect())
-    planet = Planet(planetSprite.subsurface(pygame.Rect((0,0),(190,194))),5,10,(500,500),player)
-    planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 5, 10, (500, 20),player)
+    planet = Planet(planetSprite.subsurface(pygame.Rect((0,0),(190,194))),5,1,(500,500))
+    planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 5, 1, (500, 20))
     player = Player(spritesheet.subsurface(source_rects["jet"]),screen,[(screenWidth/2)-25,screenHeight/2],[(0),(0)],[0,0],planet,planet2)
     
     while True:
