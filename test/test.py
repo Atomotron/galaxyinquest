@@ -73,17 +73,17 @@ class Player(object):
         self.velocity= velocity
         self.acc = acc
         self.screen = screen
-    
+        self.MaxVelocity = 5
     def draw(self):
         screen.blit(self.sprite,self.pos)
         
     def move(self):
-         pressed = pygame.key.get_pressed()
-         if pressed[pygame.K_s]:
-            self.velocity[0] += 5
-         elif pressed[pygame.K_w]:
-            self.velocity[0] -= 5
-         self.pos[0] += self.velocity
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_s] and self.velocity[1] < +self.MaxVelocity:
+            self.velocity[1] += 0.1
+        elif pressed[pygame.K_w] and self.velocity[1] < -self.MaxVelocity:
+            self.velocity[1] -= 0.1
+        self.pos[1] += self.velocity[1]
         
 
 def erase(rect): # Draw the background over an area to "erase" what's there.
