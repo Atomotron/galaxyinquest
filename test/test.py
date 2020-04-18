@@ -112,7 +112,8 @@ if __name__ == "__main__":
 
         player.draw()
         player.move()
-        
+        pygame.display.set_caption(
+            'Velocity:' + str(player.velocity[0]))
         
         
        
