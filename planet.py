@@ -96,7 +96,6 @@ class Cityscape(object):
             continue
          theta = dtheta*i
          tech_index = max(min(int(np.floor(self.tech_bias[i] + tech*(self.n_techs-1))),self.n_techs-1),0)
-         print(tech_index,self.n_techs)
          self.stamp_building(surface,theta,index,day,tech_index)
          
 
