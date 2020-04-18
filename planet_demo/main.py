@@ -87,7 +87,7 @@ class Cityscape(object):
 
 class PlanetSprite(object):
    CANVAS_SIZE = (256,256)
-   def __init__(self,pos,biomemap,colormap,city_spritesheet,shadow,scale=1,omega=0.01,theta=0):
+   def __init__(self,pos,biomemap,colormap,city_spritesheet,shadow,scale=1,omega=0.005,theta=0):
       self.pos = pos
       self.theta = theta
       self.omega = omega
@@ -159,7 +159,6 @@ bindex = 1
 report = "Colormap {}, biome map {}".format(cindex,bindex)
 font = pygame.font.Font('LiberationSans-Regular.ttf', 12)  
 text = font.render(report, True, (255,255,255))
-psprite.set_parameters(0,0)
 while True:
    dt = clock.tick(30)
    for event in pygame.event.get():
@@ -191,7 +190,7 @@ while True:
    templevel = (templevel - 128) / 128
    sealevel = (sealevel - 128) / 128
    screen.fill((0,0,0))
-   #psprite.set_parameters(sealevel,templevel) 
+   psprite.set_parameters(sealevel,templevel) 
    psprite.draw(screen)
    screen.blit(text,(0,0))
    pygame.display.flip()
