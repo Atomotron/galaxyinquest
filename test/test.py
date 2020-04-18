@@ -124,8 +124,8 @@ class Player(object):
             elif self.velocity[1] < 0:
                 self.velocity[1] += 0.1
     def GravityUpdater(self):
-        xself = self.centerPos[0]
-        yself = self.centerPos[1]
+        xself = self.pos[0]
+        yself = self.pos[1]
         xplanet = self.planet.centerPos[0]
         yplanet = self.planet.centerPos[1]
         dist = np.sqrt(((xplanet-xself)**2) + ((yplanet-yself)**2))
@@ -145,20 +145,23 @@ class Player(object):
             self.pos[1] = screenHeight+40
             
     def update(self):
+        pressed = pygame.key.get_pressed()
         self.draw()
         self.move()
         self.abuSalehBreaks()
         self.wrapAround()
         self.GravityUpdater()
         self.centerPos = (self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
-    
+        if pressed[pygame.K_f]:
+            print(self.pos)
+            print(self.centerPos)
 class Planet(object):
     def __init__(self,sprite,radius,mass,pos):
         self.sprite = sprite
         self.radius = radius
         self.mass = mass
         self.pos = pos
-        self.centerPos = (self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
+        self.centerPos = (self.pos[0] + self.sprite.get_rect().width // 2, self.pos[1] + self.sprite.get_rect().height // 2)
             
             
     def draw(self):
@@ -177,7 +180,7 @@ if __name__ == "__main__":
     
     clock = pygame.time.Clock() # A clock to keep track of time
     world = World(background,screen.get_rect())
-    planet = Planet(planetSprite.subsurface(pygame.Rect((0,0),(190,194))),5,100,(500,500))
+    planet = Planet(planetSprite.subsurface(pygame.Rect((0,0),(190,194))),5,10,(500,500))
     player = Player(spritesheet.subsurface(source_rects["jet"]),screen,[(screenWidth/2)-25,screenHeight/2],[(0),(0)],[0,0],planet)
     
     while True:
