@@ -87,6 +87,11 @@ class Active_Button(object):
             self.text = self.text_on
             #print('on')
             self.draw(screen)
+    def toggle(self,screen,click_pos):
+         if self.current_status:
+               self.update_status_off(self,screen,click_pos)
+         else:
+               self.update_status_on(self,screen,click_pos)
             
             
 
@@ -108,9 +113,9 @@ if __name__ == "__main__":
 
         pressed = pygame.mouse.get_pressed()
         if pressed[0]:
-            active_button.update_status_off(screen,pygame.mouse.get_pos())
+            active_button.toggle(screen,pygame.mouse.get_pos())
         if pressed[2]:
-            active_button.update_status_on(screen,pygame.mouse.get_pos())
+            active_button.toggle(screen,pygame.mouse.get_pos())
 
         pygame.display.flip()
 
