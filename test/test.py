@@ -61,10 +61,9 @@ class World(object):
             screen.blit(self.background,(0,0),rect)
         for thing in self.things:
             thing.draw(screen)
+
 #This is my class :D
-            
-            
-            
+
 class Player(object):
     #So pos,vel, and acc ALL have 0 and 1 , e.g: pos[0] is X coordinates, so on.
     def __init__(self,sprite,screen,pos,velocity,acc):
@@ -76,12 +75,7 @@ class Player(object):
         self.MaxVelocity = 5
         self.rotation = 0
         self.sprite2 = pygame.transform.rotate(sprite,-90)
-        
-        
-        
-   
 
-    
     def draw(self):
             tempPosX = self.pos[0] - self.sprite.get_rect().width // 2
             tempPosY = self.pos[1] - self.sprite.get_rect().height // 2
@@ -111,9 +105,6 @@ class Player(object):
         if pressed[pygame.K_a]:
             self.rotation+=3
             self.sprite = pygame.transform.rotate(self.sprite2,self.rotation)
-
-        self.abuSalehBreaks()
-        self.wrapAround()
             
         self.pos[1] += self.velocity[1]
         self.pos[0] += self.velocity[0]
@@ -138,8 +129,11 @@ class Player(object):
                 
             elif self.velocity[1] < 0:
                 self.velocity[1] += 0.1
-        
-         
+    def update(self):
+        self.move()
+        self.draw()
+        self.abuSalehBreaks()
+        self.wrapAround()
     def wrapAround(self):
         
         if(self.pos[0] >= (screenWidth + 40)):
@@ -176,8 +170,7 @@ if __name__ == "__main__":
                 exit()
         world.draw(screen)
 
-        player.draw()
-        player.move()
+        player.update()
         pygame.display.set_caption(
             'Velocity:' + str(player.velocity[1]))
         
