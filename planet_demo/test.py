@@ -86,8 +86,7 @@ class Player(object):
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         self.planetList = planetList
         self.angularmom = 0
-        self.thrust = False
-        self.killThrust= False
+
         
         
     def draw(self):
@@ -135,22 +134,12 @@ class Player(object):
         
         dt = dt/14
         pressed = pygame.mouse.get_pressed()
-        
-        
-        self.thrust = False
-        self.killThrust= False
 
-        if pressed[0]:  
-            
-            self.thrust = True
-            self.killThrust = False
+
+        if pressed[0]:      
             self.velocity[1] -= 0.1 * np.cos(self.rotation * 3.14 / 180) *dt
             self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180) *dt
             
-        else:
-            self.thrust = False
-            self.killThrust = True
-
             
         if (self.velocity[0] <= (-1 * self.MaxVelocity)):
             self.velocity[0] = (-1 * self.MaxVelocity)
@@ -310,7 +299,7 @@ if __name__ == "__main__":
 
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
     mainSoundChannel = pygame.mixer.Channel(0)
-    mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
+    #mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
     mainSoundChannel.set_volume(0.6)
     
     thrustSounds = pygame.mixer.Channel(1)
@@ -349,19 +338,16 @@ if __name__ == "__main__":
             elif event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 exit()
-            if event.type == pygame.MOUSEBUTTONUP:
+                
+                
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                thrustSounds.stop()
+                thrustSounds.queue(initThrust)
+                thrustSounds.queue(loopedThrust)
+                
+            elif event.type == pygame.MOUSEBUTTONUP:
                 thrustSounds.stop()
                 thrustSounds.queue(killThrust)
-
-
-
-        if(player.isThrusting()):
-            thrustSounds.queue(initThrust)
-            thrustSounds.queue(loopedThrust)
-
-
-
-
 
 
         world.draw(screen)
