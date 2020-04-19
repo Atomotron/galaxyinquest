@@ -11,10 +11,15 @@ class PlanetModel(object):
    REFRESH_TIME = 1000/2 # refresh no fewer than 2 times per second
    SPEED = 0.002 # average change to parameters each milisecond
    PULL_TO_CENTER = 0.0002
-   def __init__(self,universe,planet_sprite):
+   def __init__(self,universe,planet_sprite,pos,mass,radius):
       self.universe = universe
       self.universe.things.append(self) # we want to receive ticks
+      universe.gravitators.append(self)
+      universe.camera_targets.append(self)
       self.planet_sprite = planet_sprite
+      self.pos = pos
+      self.mass = mass
+      self.radius = radius
       self.staleness = 0 # a counter for time
       self.refresh_time = 0
       # Choose random starting values
@@ -22,10 +27,12 @@ class PlanetModel(object):
       self.temp = np.random.uniform(-1.0,1.0)
       self.pop = np.random.uniform(0.0,1.0)
       self.tech = np.random.uniform(0.0,1.0)
+
    def random_delta(self,dt,value,off_center):
       step = np.random.uniform(-1.0,1.0)*self.SPEED*dt
       restoration = - self.PULL_TO_CENTER*off_center*dt
       return value + step + restoration
+
    def tick(self,dt):
       # Randomly increase or decrease parameters, but keep them bounded
       self.sea = np.clip(self.random_delta(dt,self.sea,self.sea), -1,1)
@@ -40,13 +47,6 @@ class PlanetModel(object):
          self.planet_sprite.update()
       self.staleness += dt
 
-class Gravitator(object):
-   def __init__(self,universe,pos,mass,radius):
-      universe.gravitators.append(self)
-      #universe.sprites.append(self) # debug drawing
-      self.pos = vfloat(pos) # convert to numpy array for that sweet operator overloading
-      self.mass = mass
-      self.radius = radius
    def draw(self,screen,camera):
       return pygame.draw.circle(
          screen,
@@ -60,11 +60,12 @@ class Gravitator(object):
 
 class Player(object):
    RADIUS = 24 # radius for physics purposes
-   G = 0.1 # The strength of the force of gravity
+   G = 1 # The strength of the force of gravity
    THRUST = 0.001
    BOUNCE_DAMP = 0.4
    ABUSALEHBREAKS = 0.005 # I will put this in properly tomorrow
    BOUNCE_VOLUME = 0.5
+   PLANET_CONNECTION_RADIUS = 160 # How many units we can be off the surface of the planet for us to count as "orbiting"
    def __init__(self,universe,spritesheet,rects,sounds,pos,angle=0,vel=(0,0)):
       self.universe = universe
       self.sprites = {k:spritesheet.subsurface(rects[k]) for k in rects}
@@ -74,8 +75,10 @@ class Player(object):
       self.vel = vfloat(vel)
       self.acc = np.array((0.0,0.0)) # we want to keep around last frame's acceleration for velocity verlet
       self.angle = angle
+      self.connected_planet = None # The planet we're within range of
       universe.sprites.append(self)
       universe.things.append(self)
+      universe.camera_targets.append(self)
       universe.player = self
          
    def gravity_at(self,pos):
@@ -96,9 +99,14 @@ class Player(object):
       
    def collide(self):
       '''Check if we're inside a planet, and get us out if we are.'''
+      nearest_r_mag = None
+      nearest_gravitator = None
       for gravitator in self.universe.gravitators:
          r = gravitator.pos - self.pos
          r_mag = np.sqrt(np.sum(np.square(r)))
+         if not nearest_r_mag or nearest_r_mag > r_mag:
+            nearest_gravitator = gravitator
+            nearest_r_mag = r_mag
          if r_mag < self.RADIUS+gravitator.radius:
             r_hat = r/r_mag
             v_dot_r_hat = np.sum(self.vel*r_hat)
@@ -108,6 +116,10 @@ class Player(object):
             v_proj_r_hat = v_dot_r_hat*r_hat # project velocity on to radial vector
             self.vel -= (2-self.BOUNCE_DAMP)*v_proj_r_hat # elastic colission
             self.pos = gravitator.pos - r_hat*(self.RADIUS+gravitator.radius) # put us back on the surface
+      if nearest_r_mag < self.PLANET_CONNECTION_RADIUS+nearest_gravitator.radius:
+         self.connected_planet = nearest_gravitator
+      else:
+         self.connected_planet = None
             
    def tick(self,dt):
       # Point at the mouse
@@ -154,13 +166,16 @@ class Player(object):
       
 
 class Universe(object):
-   def __init__(self,planet_factory,background,shadow,wrapping_rect=None):
+   CAMERA_SPEED = 0.01 # The rate at which the camera approaches the target values
+   MARGIN = 100
+   def __init__(self,planet_factory,background,shadow):
       self.planet_factory = planet_factory
       self.background = background
-      self.wrapping_rect = wrapping_rect or background.get_rect() # if wrapping_rect is null, use the background rect
+      self.wrapping_rect = background.get_rect() # if wrapping_rect is null, use the background rect
       self.sprites = [] # things that need to have draw(screen) called on them
       self.things = [] # things that need to have tick(dt) called on them
-      self.gravitators = [] # things that create gravitational fields      
+      self.gravitators = [] # things that create gravitational fields    
+      self.camera_targets = [] # Things that the camera should try to display  
       self.dirty_rects = [background.get_rect()] # patches of the background that will need to be redrawn
       self.player = None
       self.planets = []
@@ -168,6 +183,9 @@ class Universe(object):
       self.scaled_shadow = shadow
       self.zoom = 1
       self.camera = np.array((0.0,0.0))
+      self.camera_urgency = 1
+      self.target_zoom = 1
+      self.target_camera = np.array((0.0,0.0))
       self.rect_offset = vfloat(self.wrapping_rect.size)/2 # To move the origin from the top left to the center of the screen
       self.age = 0
       
@@ -192,21 +210,37 @@ class Universe(object):
             self.dirty_rects.append(rect)
             touched_rects.append(rect)
       return touched_rects
-
+   
    def tick(self,dt):
-      self.age += 0.001*dt
-      self.zoom = np.sin(self.age)*0.4 + 0.6
-      self.camera = 400 * np.array((np.sin(3/10*self.age+np.pi/2),np.cos(4/10*self.age)))
+      if self.player.connected_planet:
+         self.target_zoom = 1
+         self.target_camera = self.player.connected_planet.pos
+         self.camera_urgency = 0.1
+      else:
+         min_x = min([o.pos[0] for o in self.camera_targets]) - self.MARGIN
+         max_x = max([o.pos[0] for o in self.camera_targets]) + self.MARGIN
+         min_y = min([o.pos[1] for o in self.camera_targets]) - self.MARGIN
+         max_y = max([o.pos[1] for o in self.camera_targets]) + self.MARGIN
+         self.target_zoom = min(
+            self.wrapping_rect.width/(max_x-min_x),
+            self.wrapping_rect.height/(max_y-min_y),
+            1 # Never zoom closer than 1
+         )
+         self.target_camera = np.array((
+            (max_x+min_x)/2,(max_y+min_y)/2
+         ))
+         self.camera_urgency = 1
+      self.camera += (self.target_camera-self.camera)*self.CAMERA_SPEED*dt*self.camera_urgency
+      self.zoom += (self.target_zoom-self.zoom)*self.CAMERA_SPEED*dt*self.camera_urgency
       for thing in self.things:
          thing.tick(dt)
          
    def add_planet(self,pos,mass):
-      PlanetModel(self,self.planet_factory.make_planet(self,pos))
-      Gravitator(self,pos,mass,80)
+      PlanetModel(self,self.planet_factory.make_planet(self,pos),pos,mass,80)
 
    def populate(self):
       self.add_planet((-300,300),20)
-      self.add_planet((300,0),20)
+      self.add_planet((800,0),20)
       self.add_planet((-300,-300),20)
 
 if __name__ == "__main__":
