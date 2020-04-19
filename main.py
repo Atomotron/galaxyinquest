@@ -191,7 +191,7 @@ class Universe(object):
       self.add_planet((200,200),20)
 
 if __name__ == "__main__":
-   pygame.mixer.pre_init(44100, -16, 2, 64)
+   pygame.mixer.pre_init(44100, -16, 2, 1024)
    pygame.init()
    screen_size = (1024,768)
    screen = pygame.display.set_mode(screen_size)
@@ -200,9 +200,13 @@ if __name__ == "__main__":
       pygame.image.load("img/terrain.png").convert_alpha(),
       pygame.image.load("img/planet.png").convert_alpha(),
       pygame.image.load("img/cityscapes.png").convert_alpha(),
-      pygame.image.load("img/shadow_outline.png").convert_alpha()
+      pygame.image.load("img/shadow_outline.png").convert_alpha(),
+      pygame.image.load("img/atmosphere_color.png").convert_alpha(),
+      pygame.image.load("img/AtmosphereWhite.png").convert_alpha(),
+      pygame.image.load("img/Clouds.png").convert_alpha(),
    )
    universe = Universe(planet_factory,pygame.image.load("img/nebula.jpg").convert())
+   universe.populate()
    Player(
       universe,pygame.image.load("img/ship58h.png").convert_alpha(),
       {
@@ -219,7 +223,7 @@ if __name__ == "__main__":
    engine_sound = pygame.mixer.Sound("sounds/sfx_engine_loop.ogg")
    engine_start_sound = pygame.mixer.Sound("sounds/sfx_engine_initial.ogg")
    engine_stop_sound = pygame.mixer.Sound("sounds/sfx_engine_off.ogg")
-   universe.populate()
+
    while True:
         dt = clock.tick(60)  # If we go faster than 60fps, stop and wait.
         for event in pygame.event.get():  # Get everything that's happening
