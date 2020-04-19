@@ -311,6 +311,7 @@ if __name__ == "__main__":
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
     mainSoundChannel = pygame.mixer.Channel(0)
     mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
+    mainSoundChannel.set_volume(0.6)
     
     thrustSounds = pygame.mixer.Channel(1)
     loopedThrust = pygame.mixer.Sound("../sounds/sfx_engine_loop.ogg")
