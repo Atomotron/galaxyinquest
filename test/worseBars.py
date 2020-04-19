@@ -63,6 +63,29 @@ if __name__ == "__main__":
     
     
     while True:
+        
+        
+        
+        if Tech > 0.8:
+            TempTechModifier = 0 #(We've learned to make our technology net zero).
+        elif Tech < 0.8:
+            TempTechModifier = (0.8-Tech)/100
+        if (Temp < 0.6 and Temp > 0.4):
+            TechTempModifier = +Ve Number
+            PopTempModifier = +Ve Number
+            SeaTempModifier = 0
+        elif Temp < 0.4:
+            TechTempModifier = -Ve Number
+            PopTempModifier = -Ve Number
+            SeaTempModifier = -Ve Number
+        elif Temp > 0.6:
+            TechTempModifier = -Ve Number
+            PopTempModifier = -Ve Number
+            SeaTempModifier = +Ve Number
+            dTemp = Pop+ve +  TempTechModifier
+            dTech = 0.001 (baseline) + TechTempModifier + Pop+ve
+            dPop  = 0.001 (baseline) + PopTempModifier+ PopSeaModifier+ Tech*+ve
+            dSea = SeaTempModifier
 
         clock.tick(60) 
         for event in pygame.event.get(): 
