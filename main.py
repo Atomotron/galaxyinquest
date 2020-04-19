@@ -65,11 +65,12 @@ class Player(object):
    THRUST = 0.001
    BOUNCE_DAMP = 0.1
    ABUSALEHBREAKS = 0.005 # I will put this in properly tomorrow
-   
-   def __init__(self,universe,spritesheet,rects,pos,angle=0,vel=(0,0)):
+   BOUNCE_VOLUME = 0.5
+   def __init__(self,universe,spritesheet,rects,sounds,pos,angle=0,vel=(0,0)):
       self.universe = universe
       self.sprites = {k:spritesheet.subsurface(rects[k]) for k in rects}
       self.rects = rects
+      self.sounds = sounds
       self.pos = vfloat(pos)
       self.vel = vfloat(vel)
       self.acc = np.array((0.0,0.0)) # we want to keep around last frame's acceleration for velocity verlet
@@ -112,7 +113,10 @@ class Player(object):
          r_mag = np.sqrt(np.sum(np.square(r)))
          if r_mag < self.RADIUS+gravitator.radius:
             r_hat = r/r_mag
-            v_proj_r_hat = np.sum(self.vel*r_hat)*r_hat # project velocity on to radial vector
+            v_dot_r_hat = np.sum(self.vel*r_hat)
+            self.sounds['bounce'].set_volume(v_dot_r_hat*self.BOUNCE_VOLUME) # Quiet sound for tiny bounce
+            self.sounds['bounce'].play()
+            v_proj_r_hat = v_dot_r_hat*r_hat # project velocity on to radial vector
             self.vel -= (2-self.BOUNCE_DAMP)*v_proj_r_hat # elastic colission
             self.pos = gravitator.pos - r_hat*(self.RADIUS+gravitator.radius) # put us back on the surface
             
@@ -187,6 +191,7 @@ class Universe(object):
       self.add_planet((200,200),20)
 
 if __name__ == "__main__":
+   pygame.mixer.pre_init(44100, -16, 2, 64)
    pygame.init()
    screen_size = (1024,768)
    screen = pygame.display.set_mode(screen_size)
@@ -205,8 +210,15 @@ if __name__ == "__main__":
          'orb_small': Rect(52,0,10,10),
          'orb_large': Rect(52,10,28,29),
       },
+      {
+         'bounce':pygame.mixer.Sound("sounds/bounce_planet_short.ogg"),
+      },
       (500,300),0,(0.3,0)
    )
+   pygame.mixer.Sound("sounds/space_ambient.ogg").play(loops=-1,fade_ms=1000)
+   engine_sound = pygame.mixer.Sound("sounds/sfx_engine_loop.ogg")
+   engine_start_sound = pygame.mixer.Sound("sounds/sfx_engine_initial.ogg")
+   engine_stop_sound = pygame.mixer.Sound("sounds/sfx_engine_off.ogg")
    universe.populate()
    while True:
         dt = clock.tick(60)  # If we go faster than 60fps, stop and wait.
@@ -217,5 +229,11 @@ if __name__ == "__main__":
             elif event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 exit()
+            elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+               engine_sound.play(loops=-1,fade_ms=100)
+               engine_start_sound.play()
+            elif event.type == MOUSEBUTTONUP and event.button == 1:
+               engine_sound.fadeout(100)
+               engine_stop_sound.play()
         universe.tick(dt)
         pygame.display.update(universe.draw(screen)) # Only push out the stuff we changed to the OS
