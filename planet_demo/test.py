@@ -84,7 +84,7 @@ class Player(object):
         self.centerPos = (
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         self.planetList = planetList
-
+        self.angularmom = 0
     def draw(self):
         screen.blit(self.sprite, (self.centerPos[0], self.centerPos[1]))
 
@@ -108,12 +108,15 @@ class Player(object):
         if pressed[pygame.K_a]:
             self.rotation += 3 *dt
             self.sprite = pygame.transform.rotate(self.sprite2, self.rotation)
-
+        if pressed[pygame.K_q]:
+            self.angularmom += 0.05 *dt
+        if pressed[pygame.K_e]:
+            self.angularmom -= 0.05 *dt
         self.velocity[0] += self.acc[0] *dt
         self.velocity[1] += self.acc[1] *dt
         self.pos[1] += self.velocity[1] *dt
         self.pos[0] += self.velocity[0] *dt
-
+        self.rotation += self.angularmom * dt
     def abuSalehBreaks(self,dt):
         dt = dt / 14
         pressed = pygame.key.get_pressed()
@@ -130,8 +133,9 @@ class Player(object):
                 self.velocity[1] -= 0.1 *dt
             elif self.velocity[1] < 0:
                 self.velocity[1] += 0.1 *dt
-        self.acc[0] = 0
-        self.acc[1] = 0
+            self.acc[0] = 0
+            self.acc[1] = 0
+            self.angularmom = 0
     def gravityUpdater(self, X):
         planetAcc = [0, 0]
         xself = self.pos[0]
@@ -198,7 +202,7 @@ class Player(object):
         if pressed[pygame.K_f]:
             print(self.planetList)
             print(self.gravityUpdater(self.planetList[0]))
-
+        self.sprite = pygame.transform.rotate(self.sprite2, self.rotation)
 class Planet(object):
     def __init__(self, sprite, radius, mass, pos):
         self.sprite = sprite
