@@ -131,22 +131,20 @@ class PlanetSprite(object):
    def draw(self,surface):
       day = pygame.transform.rotozoom(self.day_canvas,self.theta,self.scale)
       night = pygame.transform.rotozoom(self.night_canvas,self.theta,self.scale)
-      day_pos = 
       surface.blit(
          day,
          (self.pos[0],self.pos[1] - night.get_height()//2),
          pygame.Rect(day.get_width()//2,0,day.get_width()//2,day.get_height()) 
       )
-      night_pos = (
-         self.pos[0] - day.get_width()//2,
-         self.pos[1] - day.get_height()//2,
+      surface.blit(
+         night,
+         (self.pos[0] - night.get_width()//2,self.pos[1] - night.get_height()//2),
+         pygame.Rect(0,0,day.get_width()//2,day.get_height()) 
       )
-      surface.blit(night,night_pos,pygame.Rect(0,0,day.get_width()//2,day.get_height()) )
-      shadow_pos = (
-         self.pos[0] - self.shadow.get_width()//2,
-         self.pos[1] - self.shadow.get_height()//2,
+      surface.blit(
+         self.shadow,
+         (self.pos[0] - self.shadow.get_width()//2,self.pos[1] - self.shadow.get_height()//2)
       )
-      surface.blit(self.shadow,shadow_pos)
 
 if __name__ == "__main__":
    pygame.init()
