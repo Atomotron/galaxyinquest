@@ -46,7 +46,7 @@ class Planet(object):
       ).inflate(1,0) # return impacted pixels
 
 class Player(object):
-   RADIUS = 24 # radius for physics purposes
+   RADIUS = 32 # radius for physics purposes
    G = 0.25 # The strength of the force of gravity
    THRUST = 0.00025
    BOUNCE_DAMP = 0.6
