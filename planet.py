@@ -102,13 +102,13 @@ class Cityscape(object):
 
 class PlanetSprite(object):
    CANVAS_SIZE = (256,256)
-   def __init__(self,universe,pos,biomemap,colormap,city_spritesheet,shadow,scale=1,omega=0.005,theta=0):
+   def __init__(self,universe,pos,biomemap,colormap,city_spritesheet,shadow,scale=1,omega=0.005,theta=None):
       self.universe = universe
       if universe:
          universe.things.append(self)
          universe.sprites.append(self)
       self.pos = pos
-      self.theta = theta
+      self.theta = theta or np.random.uniform(0,360)
       self.omega = omega
       self.scale = scale
       self.colormap = colormap
