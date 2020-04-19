@@ -3,13 +3,15 @@ import pygame
 from pygame.locals import *
 import numpy as np
 
+from util import vfloor,vfloat
 import planet
+
 
 class Gravitator(object):
    def __init__(self,universe,pos,mass,radius):
       universe.gravitators.append(self)
       universe.sprites.append(self) # debug drawing
-      self.pos = np.array(pos,dtype=np.float64) # convert to numpy array for that sweet operator overloading
+      self.pos = vfloat(pos) # convert to numpy array for that sweet operator overloading
       self.mass = mass
       self.radius = radius
    def draw(self,screen):
@@ -18,7 +20,7 @@ class Gravitator(object):
          (min(255,max(0,int(self.mass))),
           min(255,max(0,int(self.mass*255))),
           min(255,max(0,int(np.log(self.mass))))),
-         (int(self.pos[0]),int(self.pos[1])),
+         vfloor(self.pos),
          int(self.radius),
          2,
       ) # return impacted pixels
@@ -31,9 +33,9 @@ class Player(object):
    def __init__(self,universe,sprite,pos,angle=0,vel=(0,0)):
       self.universe = universe
       self.sprite = sprite
-      self.pos = np.array(pos,dtype=np.float64) 
-      self.vel = np.array(vel,dtype=np.float64)
-      self.acc = np.array((0,0),dtype=np.float64) # we want to keep around last frame's acceleration for velocity verlet
+      self.pos = vfloat(pos)
+      self.vel = vfloat(vel)
+      self.acc = np.array((0.0,0.0)) # we want to keep around last frame's acceleration for velocity verlet
       self.angle = angle
       universe.sprites.append(self)
       universe.things.append(self)
@@ -75,7 +77,7 @@ class Player(object):
             self.pos = gravitator.pos - r_hat*(self.RADIUS+gravitator.radius) # put us back on the surface
    def tick(self,dt):
       # Point at the mouse
-      delta_to_mouse = np.array(pygame.mouse.get_pos(),dtype=np.float64) - self.pos
+      delta_to_mouse = vfloat(pygame.mouse.get_pos()) - self.pos
       self.angle = np.arctan2(delta_to_mouse[1],delta_to_mouse[0]) 
       # Collide with planets
       self.collide()
@@ -88,7 +90,7 @@ class Player(object):
       self.wrap()
    def draw(self,screen):
       rotated_sprite = pygame.transform.rotozoom(self.sprite,-self.angle*(180/np.pi)-90,1)
-      pos = (int(self.pos[0]-rotated_sprite.get_width()/2),int(self.pos[1]-rotated_sprite.get_height()/2))
+      pos = vfloor(self.pos - vfloat(rotated_sprite.get_size())/2)
       return screen.blit(
          rotated_sprite,
          pos
