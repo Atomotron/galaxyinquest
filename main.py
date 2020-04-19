@@ -30,6 +30,8 @@ class Player(object):
    G = 1 # The strength of the force of gravity
    THRUST = 0.001
    BOUNCE_DAMP = 0.1
+   ABUSALEHBREAKS = 0.005
+   
    def __init__(self,universe,spritesheet,rects,pos,angle=0,vel=(0,0)):
       self.universe = universe
       self.sprites = {k:spritesheet.subsurface(rects[k]) for k in rects}
@@ -41,17 +43,18 @@ class Player(object):
       universe.sprites.append(self)
       universe.things.append(self)
       universe.player = self
+      
    def wrap(self):
       '''Enforce toroidal geometry'''
       if self.pos[1] > self.universe.wrapping_rect.bottom + self.RADIUS:
          self.pos[1] = self.universe.wrapping_rect.top-self.RADIUS
       elif self.pos[1] < self.universe.wrapping_rect.top-self.RADIUS:
          self.pos[1] = self.universe.wrapping_rect.bottom + self.RADIUS
-      
       if self.pos[0] > self.universe.wrapping_rect.right + self.RADIUS:
          self.pos[0] = self.universe.wrapping_rect.left-self.RADIUS
       elif self.pos[0] < self.universe.wrapping_rect.left-self.RADIUS:
          self.pos[0] = self.universe.wrapping_rect.right + self.RADIUS
+         
    def gravity_at(self,pos):
       '''Computes the acceleration due to gravity due to a body.'''
       g = np.array((0.0,0.0))
@@ -60,12 +63,16 @@ class Player(object):
          r_mag_raised_to_three = np.power(np.sum(np.square(r)),3/2)
          g += self.G*gravitator.mass*r / r_mag_raised_to_three
       return g
+  
    def thrust(self):
       '''Computes how much we should be thrusting based on our controls.'''
-      return np.array((
+      return (np.array((
          self.THRUST*np.cos(self.angle),
          self.THRUST*np.sin(self.angle),
-      )) if pygame.mouse.get_pressed()[0] else np.array((0.0,0.0))
+      )) if pygame.mouse.get_pressed()[0] else np.array((0.0,0.0))) + \
+      (-self.vel * self.ABUSALEHBREAKS if pygame.key.get_pressed()[K_SPACE] else \
+      np.array((0.0,0.0)))
+  
    def collide(self):
       '''Check if we're inside a planet, and get us out if we are.'''
       for gravitator in self.universe.gravitators:
@@ -76,6 +83,7 @@ class Player(object):
             v_proj_r_hat = np.sum(self.vel*r_hat)*r_hat # project velocity on to radial vector
             self.vel -= (2-self.BOUNCE_DAMP)*v_proj_r_hat # elastic colission
             self.pos = gravitator.pos - r_hat*(self.RADIUS+gravitator.radius) # put us back on the surface
+            
    def tick(self,dt):
       # Point at the mouse
       delta_to_mouse = vfloat(pygame.mouse.get_pos()) - self.pos
@@ -89,6 +97,7 @@ class Player(object):
       self.acc = new_acc # save acceleration for next frame
       # Enforce toroidal geometry
       self.wrap()
+      
    def draw(self,screen):
       axis = np.array((np.cos(self.angle),np.sin(self.angle)))
       rotated_sprite = pygame.transform.rotozoom(
@@ -121,6 +130,7 @@ class Universe(object):
       self.dirty_rects = [background.get_rect()] # patches of the background that will need to be redrawn
       self.player = None
       self.planets = []
+      
    def draw(self,screen):
       bg_rect = self.background.get_rect()
       for rect in self.dirty_rects:
