@@ -118,12 +118,25 @@ class Player(object):
         self.pos[1] += self.velocity[1] *dt
         self.pos[0] += self.velocity[0] *dt
         self.rotation += self.angularmom * dt
+        
     def move2(self,dt):
         dt = dt/14
         pressed = pygame.mouse.get_pressed()
-        if pressed[0]:
+        thrustSounds = pygame.mixer.Channel(2)
+        
+        
+        
+        
+        if pressed[0]:  
+            
+            thrustSounds.queue(pygame.mixer.Sound("../sounds/sfx_engine_initial.ogg"))
+            thrustSounds.queue(pygame.mixer.Sound("../sounds/sfx_engine_loop.ogg"))
             self.velocity[1] -= 0.1 * np.cos(self.rotation * 3.14 / 180) *dt
             self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180) *dt
+            
+        else:
+            thrustSounds.stop()
+            
         if (self.velocity[0] <= (-1 * self.MaxVelocity)):
             self.velocity[0] = (-1 * self.MaxVelocity)
         if (self.velocity[1] <= (-1 * self.MaxVelocity)):
@@ -281,7 +294,13 @@ if __name__ == "__main__":
 
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
     
-    gameLoopSound = pygame.mixer.Sound("../sounds/space_ambient.ogg").play()
+    
+    mainSoundChannel = pygame.mixer.Channel(0)
+    mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
+    
+    
+    
+    
 
     clock = pygame.time.Clock()  # A clock to keep track of time
     world = World(background, screen.get_rect())
