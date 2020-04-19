@@ -68,3 +68,5 @@ class UI(object):
       elif event.type == MOUSEBUTTONUP and event.button == 1:
          self.sounds['engine'].fadeout(100)
          self.sounds['engine_stop'].play()
+      elif event.type == KEYDOWN and event.key == K_SPACE:
+         self.sounds['abusalehbreaks'].play()

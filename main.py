@@ -295,6 +295,7 @@ if __name__ == "__main__":
       'engine' :  pygame.mixer.Sound("sounds/sfx_engine_loop.ogg"),
       'engine_start' :  pygame.mixer.Sound("sounds/sfx_engine_initial.ogg"),
       'engine_stop'  :  pygame.mixer.Sound("sounds/sfx_engine_off.ogg"),
+      'abusalehbreaks'  :  pygame.mixer.Sound("sounds/abubreak.ogg")
    }
    ui = widgets.UI(universe,sounds)    
    while True:
@@ -306,7 +307,7 @@ if __name__ == "__main__":
             elif event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 exit()
-            elif event.type == MOUSEBUTTONDOWN or event.type == MOUSEBUTTONUP:
+            elif event.type == MOUSEBUTTONDOWN or event.type == MOUSEBUTTONUP or event.type == KEYDOWN:
                ui.handle_event(event)
         universe.tick(dt)
         pygame.display.update(universe.draw(screen)) # Only push out the stuff we changed to the OS
