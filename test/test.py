@@ -83,7 +83,7 @@ class Player(object):
         self.centerPos = (
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         self.planetList = planetList
-
+        self.angularmom = 0
     def draw(self):
         screen.blit(self.sprite, (self.centerPos[0], self.centerPos[1]))
 
@@ -107,12 +107,15 @@ class Player(object):
         if pressed[pygame.K_a]:
             self.rotation += 3 *dt
             self.sprite = pygame.transform.rotate(self.sprite2, self.rotation)
-
+        if pressed[pygame.K_q]:
+            self.angularmom += 0.05 *dt
+        if pressed[pygame.K_e]:
+            self.angularmom -= 0.05 *dt
         self.velocity[0] += self.acc[0] *dt
         self.velocity[1] += self.acc[1] *dt
         self.pos[1] += self.velocity[1] *dt
         self.pos[0] += self.velocity[0] *dt
-
+        self.rotation += self.angularmom *dt
     def abuSalehBreaks(self,dt):
         dt = dt / 14
         pressed = pygame.key.get_pressed()
@@ -129,8 +132,9 @@ class Player(object):
                 self.velocity[1] -= 0.1 *dt
             elif self.velocity[1] < 0:
                 self.velocity[1] += 0.1 *dt
-        self.acc[0] = 0
-        self.acc[1] = 0
+            self.acc[0] = 0
+            self.acc[1] = 0
+            self.angularmom = 0
     def gravityUpdater(self, X):
         planetAcc = [0, 0]
         xself = self.pos[0]
@@ -195,9 +199,9 @@ class Player(object):
         self.centerPos = (
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         if pressed[pygame.K_f]:
-            print(self.planetList)
-            print(self.gravityUpdater(self.planetList[0]))
-
+            print(self.pos[0])
+            print(self.pos[1])
+        self.sprite = pygame.transform.rotate(self.sprite2, self.rotation)
 class Planet(object):
     def __init__(self, sprite, radius, mass, pos):
         self.sprite = sprite
@@ -220,10 +224,10 @@ if __name__ == "__main__":
 
     clock = pygame.time.Clock()  # A clock to keep track of time
     world = World(background, screen.get_rect())
-    planet = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 10, (500, 500))
-    planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 10, (500, 20))
+    planet = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 3, (622, 351))
+    #planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 0.1, (500, 20))
     player = Player(spritesheet.subsurface(source_rects["jet"]), screen, [(screenWidth / 2) - 25, screenHeight / 2],
-                    [(0), (0)], [0, 0], [planet, planet2])
+                    [(0), (0)], [0, 0], [planet])
 
     while True:
         dt = clock.tick(60)  # If we go faster than 60fps, stop and wait.
@@ -237,7 +241,7 @@ if __name__ == "__main__":
 
         world.draw(screen)
         planet.update()
-        planet2.update()
+        #planet2.update()
         player.update(dt)
 
         pygame.display.set_caption(
