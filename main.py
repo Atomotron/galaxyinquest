@@ -53,13 +53,19 @@ class Player(object):
    ABUSALEHBREAKS = 0.005 # I will put this in properly tomorrow
    BOUNCE_VOLUME = 0.5
    PLANET_CONNECTION_RADIUS = 160 # How many units we can be off the surface of the planet for us to count as "orbiting"
+   BOUNDARIES = (
+      (-5000,5000),
+      (-5000,5000)
+   )
    def __init__(self,universe,spritesheet,rects,sounds,pos,angle=0,vel=(0,0)):
       self.universe = universe
       self.sprites = {k:spritesheet.subsurface(rects[k]) for k in rects}
       self.rects = rects
       self.sounds = sounds
       self.pos = vfloat(pos)
+      self.initial_pos = vfloat(pos)# for teleporting home
       self.vel = vfloat(vel)
+      self.initial_vel = vfloat(vel) # for teleporting home
       self.acc = np.array((0.0,0.0)) # we want to keep around last frame's acceleration for velocity verlet
       self.angle = angle
       self.connected_planet = None # The planet we're within range of
@@ -111,7 +117,11 @@ class Player(object):
          self.connected_planet = nearest_gravitator
       else:
          self.connected_planet = None
-            
+   def warp_home(self):
+      if self.pos[0] < self.BOUNDARIES[0][0] or self.pos[0] > self.BOUNDARIES[0][1] or \
+         self.pos[1] < self.BOUNDARIES[1][0] or self.pos[1] > self.BOUNDARIES[1][1]:
+         self.pos = self.initial_pos
+         self.vel = self.initial_vel
    def tick(self,dt):
       # Point at the mouse
       delta_to_mouse = self.universe.uncam(vfloat(pygame.mouse.get_pos())) - self.pos
@@ -123,6 +133,7 @@ class Player(object):
       new_acc = self.gravity_at(self.pos) + self.thrust()
       self.vel = self.vel + 0.5*dt*(self.acc + new_acc)
       self.acc = new_acc # save acceleration for next frame
+      self.warp_home()
       
    def draw(self,screen,camera):
       axis = np.array((np.cos(self.angle),np.sin(self.angle))) * camera.zoom
