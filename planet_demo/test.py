@@ -274,11 +274,13 @@ class PlanetSpriteLoader(object):
         psprite.tick(dt)
         psprite.set_parameters(self.sealevel,self.templevel,self.population,self.tech) 
         psprite.draw(screen)
-
+        
 
 if __name__ == "__main__":
 
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
+    
+    gameLoopSound = pygame.mixer.Sound("../sounds/space_ambient.ogg").play()
 
     clock = pygame.time.Clock()  # A clock to keep track of time
     world = World(background, screen.get_rect())
