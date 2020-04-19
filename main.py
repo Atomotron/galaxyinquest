@@ -33,10 +33,11 @@ class PlanetModel(object):
       self.pop = np.clip(self.random_delta(dt,self.pop,self.pop-0.5), 0,1)
       self.tech = np.clip(self.random_delta(dt,self.tech,self.tech-0.5), 0,1)
       # Update the sprite if we have gone too long without doing so
+      self.planet_sprite.set_parameters(self.sea,self.temp,self.pop,self.tech)
       if self.staleness > self.refresh_time:
          self.refresh_time = np.random.uniform(0.0,self.REFRESH_TIME)
          self.staleness = 0
-         self.planet_sprite.set_parameters(self.sea,self.temp,self.pop,self.tech)
+         self.planet_sprite.update()
       self.staleness += dt
       
       
