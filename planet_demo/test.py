@@ -338,14 +338,17 @@ if __name__ == "__main__":
             elif event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 exit()
+            
+            pressed = pygame.mouse.get_pressed()
                 
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 
-            if event.type == pygame.MOUSEBUTTONDOWN:
                 thrustSounds.stop()
                 thrustSounds.queue(initThrust)
                 thrustSounds.queue(loopedThrust)
                 
-            elif event.type == pygame.MOUSEBUTTONUP:
+            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+               
                 thrustSounds.stop()
                 thrustSounds.queue(killThrust)
 
