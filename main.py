@@ -47,9 +47,9 @@ class Planet(object):
 
 class Player(object):
    RADIUS = 24 # radius for physics purposes
-   G = 1 # The strength of the force of gravity
-   THRUST = 0.001
-   BOUNCE_DAMP = 0.4
+   G = 0.25 # The strength of the force of gravity
+   THRUST = 0.00025
+   BOUNCE_DAMP = 0.6
    ABUSALEHBREAKS = 0.005 # I will put this in properly tomorrow
    BOUNCE_VOLUME = 0.5
    PLANET_CONNECTION_RADIUS = 160 # How many units we can be off the surface of the planet for us to count as "orbiting"
@@ -87,12 +87,22 @@ class Player(object):
    def thrusting(self):
       return pygame.mouse.get_pressed()[0]
    
+   @property
+   def abu_saleh_breaking(self):
+      '''Determines whether or not we will need to take our car to abu saleh later today.'''
+      return pygame.key.get_pressed()[K_SPACE]
+   
    def thrust(self):
       '''Computes how much we should be thrusting based on our controls.'''
-      return (np.array((
-         self.THRUST*np.cos(self.angle),
-         self.THRUST*np.sin(self.angle),
-      )) if self.thrusting else np.array((0.0,0.0)))
+      if self.abu_saleh_breaking:
+         return -self.vel*self.ABUSALEHBREAKS
+      elif self.thrusting:
+         return np.array((
+            self.THRUST*np.cos(self.angle),
+            self.THRUST*np.sin(self.angle),
+         ))         
+      else:
+         return np.array((0.0,0.0))
       
    def collide(self):
       '''Check if we're inside a planet, and get us out if we are.'''
