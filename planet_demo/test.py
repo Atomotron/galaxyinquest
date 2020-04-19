@@ -86,6 +86,9 @@ class Player(object):
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         self.planetList = planetList
         self.angularmom = 0
+
+        
+        
     def draw(self):
         screen.blit(self.sprite, (self.centerPos[0], self.centerPos[1]))
 
@@ -118,12 +121,26 @@ class Player(object):
         self.pos[1] += self.velocity[1] *dt
         self.pos[0] += self.velocity[0] *dt
         self.rotation += self.angularmom * dt
+        
+        
+        
+    def isThrusting(self):
+        return self.thrust
+    
+    def isKillingThrusting(self):
+        return self.killThrust
+
     def move2(self,dt):
+        
         dt = dt/14
         pressed = pygame.mouse.get_pressed()
-        if pressed[0]:
+
+
+        if pressed[0]:      
             self.velocity[1] -= 0.1 * np.cos(self.rotation * 3.14 / 180) *dt
             self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180) *dt
+            
+            
         if (self.velocity[0] <= (-1 * self.MaxVelocity)):
             self.velocity[0] = (-1 * self.MaxVelocity)
         if (self.velocity[1] <= (-1 * self.MaxVelocity)):
@@ -212,6 +229,7 @@ class Player(object):
                 self.velocity[1] -=2*V2y
         return collided
     def update(self,dt):
+        
         pressed = pygame.key.get_pressed()
         collided = self.collide()
         self.draw()
@@ -273,11 +291,23 @@ class PlanetSpriteLoader(object):
         psprite.tick(dt)
         psprite.set_parameters(self.sealevel,self.templevel,self.population,self.tech) 
         psprite.draw(screen)
+        
 
+   
         
 if __name__ == "__main__":
 
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
+    mainSoundChannel = pygame.mixer.Channel(0)
+    #mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
+    mainSoundChannel.set_volume(0.6)
+    
+    thrustSounds = pygame.mixer.Channel(1)
+    loopedThrust = pygame.mixer.Sound("../sounds/sfx_engine_loop.ogg")
+    initThrust = pygame.mixer.Sound("../sounds/sfx_engine_initial.ogg")
+    killThrust = pygame.mixer.Sound("../sounds/sfx_engine_off.ogg")
+
+    
 
     clock = pygame.time.Clock()  # A clock to keep track of time
     world = World(background, screen.get_rect())
@@ -308,6 +338,20 @@ if __name__ == "__main__":
             elif event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 exit()
+            
+            pressed = pygame.mouse.get_pressed()
+                
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                
+                thrustSounds.stop()
+                thrustSounds.queue(initThrust)
+                thrustSounds.queue(loopedThrust)
+                
+            elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+               
+                thrustSounds.stop()
+                thrustSounds.queue(killThrust)
+
 
         world.draw(screen)
         
