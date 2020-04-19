@@ -93,7 +93,7 @@ class Cityscape(object):
    def stamp(self,surface,day=True,population=0,tech=0):
       dtheta = 360 / self.NUM_SLOTS
       for i,index in enumerate(self.sprite_indices):
-         if self.pop_bias[i] > population:
+         if self.pop_bias[i] >= population:
             continue
          theta = dtheta*i
          tech_index = max(min(int(np.floor(self.tech_bias[i] + tech*(self.n_techs-1))),self.n_techs-1),0)
@@ -119,6 +119,7 @@ class PlanetSprite(object):
       self.day_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.night_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.planet_sprite = biomemap.make_surface()
+      self.set_parameters(0,0,0,0)
    def tick(self,dt):
       self.theta += self.omega * dt
    def blit_centered(self,dst,src,src_rect):
@@ -164,13 +165,14 @@ class PlanetSpriteFactory(object):
       self.city_spritesheet = city_spritesheet
       self.shadow = shadow
    def make_planet(self,universe,pos,bindex=None,cindex=None):
-      bindex = bindex or np.random.randint(0,len(self.biome_maps))
+      bindex = bindex or np.random.randint(1,len(self.biome_maps)) # start at 1 because 0 is my thing
       cindex = cindex or np.random.randint(0,len(self.color_maps))
+      print("Making planet with",bindex,cindex)
       return PlanetSprite(
          universe,
          pos,
          self.biome_maps[bindex%len(self.biome_maps)],
-         self.colormap[cindex%len(self.color_maps)],
+         self.color_maps[cindex%len(self.color_maps)],
          self.city_spritesheet,
          self.shadow
       )

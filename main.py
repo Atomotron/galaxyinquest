@@ -10,7 +10,7 @@ import planet
 class Gravitator(object):
    def __init__(self,universe,pos,mass,radius):
       universe.gravitators.append(self)
-      universe.sprites.append(self) # debug drawing
+      #universe.sprites.append(self) # debug drawing
       self.pos = vfloat(pos) # convert to numpy array for that sweet operator overloading
       self.mass = mass
       self.radius = radius
@@ -30,9 +30,10 @@ class Player(object):
    G = 1 # The strength of the force of gravity
    THRUST = 0.001
    BOUNCE_DAMP = 0.1
-   def __init__(self,universe,sprite,pos,angle=0,vel=(0,0)):
+   def __init__(self,universe,spritesheet,rects,pos,angle=0,vel=(0,0)):
       self.universe = universe
-      self.sprite = sprite
+      self.sprites = {k:spritesheet.subsurface(rects[k]) for k in rects}
+      self.rects = rects
       self.pos = vfloat(pos)
       self.vel = vfloat(vel)
       self.acc = np.array((0.0,0.0)) # we want to keep around last frame's acceleration for velocity verlet
@@ -89,15 +90,29 @@ class Player(object):
       # Enforce toroidal geometry
       self.wrap()
    def draw(self,screen):
-      rotated_sprite = pygame.transform.rotozoom(self.sprite,-self.angle*(180/np.pi)-90,1)
-      pos = vfloor(self.pos - vfloat(rotated_sprite.get_size())/2)
-      return screen.blit(
+      axis = np.array((np.cos(self.angle),np.sin(self.angle)))
+      rotated_sprite = pygame.transform.rotozoom(
+         self.sprites["U"],
+         -self.angle*(180/np.pi)-90,
+         1
+      )
+      r = screen.blit(
+         self.sprites['orb_small'],
+         vfloor(self.pos - vfloat(self.sprites['orb_small'].get_size())/2 - axis*28)
+      )
+      r = r.union(screen.blit(
+         self.sprites['orb_large'],
+         vfloor(self.pos - vfloat(self.sprites['orb_large'].get_size())/2- axis*3)
+      ))
+      return r.union(screen.blit(
          rotated_sprite,
-         pos
-      ) # Returns impacted pixels
+         vfloor(self.pos - vfloat(rotated_sprite.get_size())/2)
+      ))
+      
 
 class Universe(object):
-   def __init__(self,background,wrapping_rect=None):
+   def __init__(self,planet_factory,background,wrapping_rect=None):
+      self.planet_factory = planet_factory
       self.background = background
       self.wrapping_rect = wrapping_rect or background.get_rect() # if wrapping_rect is null, use the background rect
       self.sprites = [] # things that need to have draw(screen) called on them
@@ -121,16 +136,34 @@ class Universe(object):
    def tick(self,dt):
       for thing in self.things:
          thing.tick(dt)
+   def add_planet(self,pos,mass):
+      self.planet_factory.make_planet(self,pos)
+      Gravitator(self,pos,mass,80)
    def populate(self):
-      Gravitator(self,(500,500),100,80)
+      self.add_planet((500,500),20)
+      self.add_planet((800,200),20)
 
 if __name__ == "__main__":
    pygame.init()
    screen_size = (1024,768)
    screen = pygame.display.set_mode(screen_size)
    clock = pygame.time.Clock()
-   universe = Universe(pygame.image.load("img/nebula.jpg").convert())
-   Player(universe,pygame.image.load("img/sprite_grave.png").convert_alpha(),(500,300),0,(0.7,0))
+   planet_factory = planet.PlanetSpriteFactory(
+      pygame.image.load("img/terrain.png").convert_alpha(),
+      pygame.image.load("img/planet.png").convert_alpha(),
+      pygame.image.load("img/cityscapes.png").convert_alpha(),
+      pygame.image.load("img/shadow_outline.png").convert_alpha()
+   )
+   universe = Universe(planet_factory,pygame.image.load("img/nebula.jpg").convert())
+   Player(
+      universe,pygame.image.load("img/ship58h.png").convert_alpha(),
+      {
+         'U': Rect(0,0,52,58),
+         'orb_small': Rect(52,0,10,10),
+         'orb_large': Rect(52,10,28,29),
+      },
+      (500,300),0,(0.3,0)
+   )
    universe.populate()
    while True:
         dt = clock.tick(60)  # If we go faster than 60fps, stop and wait.
