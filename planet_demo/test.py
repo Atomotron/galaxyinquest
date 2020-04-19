@@ -86,6 +86,9 @@ class Player(object):
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         self.planetList = planetList
         self.angularmom = 0
+        self.thrust = False
+        
+        
     def draw(self):
         screen.blit(self.sprite, (self.centerPos[0], self.centerPos[1]))
 
@@ -119,23 +122,29 @@ class Player(object):
         self.pos[0] += self.velocity[0] *dt
         self.rotation += self.angularmom * dt
         
+        
+        
+    def isThrusting(self):
+        return self.thrust
+        
+        
     def move2(self,dt):
+        
         dt = dt/14
         pressed = pygame.mouse.get_pressed()
-        thrustSounds = pygame.mixer.Channel(2)
         
         
+        thrust= False
         
-        
+
         if pressed[0]:  
             
-            thrustSounds.queue(pygame.mixer.Sound("../sounds/sfx_engine_initial.ogg"))
-            thrustSounds.queue(pygame.mixer.Sound("../sounds/sfx_engine_loop.ogg"))
+            self.thrust = True
             self.velocity[1] -= 0.1 * np.cos(self.rotation * 3.14 / 180) *dt
             self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180) *dt
             
         else:
-            thrustSounds.stop()
+            self.thrust = False
             
         if (self.velocity[0] <= (-1 * self.MaxVelocity)):
             self.velocity[0] = (-1 * self.MaxVelocity)
@@ -293,12 +302,12 @@ class PlanetSpriteLoader(object):
 if __name__ == "__main__":
 
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
-    
-    
     mainSoundChannel = pygame.mixer.Channel(0)
     mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
     
-    
+    thrustSounds = pygame.mixer.Channel(1)
+    loopedThrust = pygame.mixer.Sound("../sounds/sfx_engine_loop.ogg")
+    initThrust = pygame.mixer.Sound("../sounds/sfx_engine_initial.ogg")
     
     
 
@@ -331,6 +340,17 @@ if __name__ == "__main__":
             elif event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 exit()
+
+
+
+        if(player.isThrusting()):
+            thrustSounds.queue(initThrust)
+            thrustSounds.queue(loopedThrust)
+        else:
+            thrustSounds.stop()
+
+
+
 
         world.draw(screen)
         
