@@ -132,6 +132,7 @@ class Player(object):
          self.pos[1] < self.BOUNDARIES[1][0] or self.pos[1] > self.BOUNDARIES[1][1]:
          self.pos = self.initial_pos
          self.vel = self.initial_vel
+         self.sounds['warp_home'].play()
    def tick(self,dt):
       # Point at the mouse
       delta_to_mouse = self.universe.uncam(vfloat(pygame.mouse.get_pos())) - self.pos
@@ -287,6 +288,7 @@ if __name__ == "__main__":
       },
       {
          'bounce':pygame.mixer.Sound("sounds/bounce_planet_short.ogg"),
+         'warp_home':pygame.mixer.Sound("sounds/error.ogg"),
       },
       (0,0),0,(0.0,0)
    )
