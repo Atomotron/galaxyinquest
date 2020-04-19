@@ -3,8 +3,29 @@ import pygame
 from pygame.locals import *
 import pygame.surfarray as surfarray
 import numpy as np
-
+import random
 from util import vfloor,vfloat
+
+NAME_PREFIXES = [
+   'Al','Aub','Bor','Bro','Cor','Co','Di','Do','Ea','Ear','Ee','For','Fre','Gor',
+   'Gon','Hi','Hu','Hal','Io','Incan','Ju','Jov','Kor','Kan','Li','Lu','Moo',
+   'Mer','Mar','Nige','Nitro','Nep','Oor','Opu','Plu','Poo','Quo','Qua','Qui',
+   'Rig','Roto','Ron','Sat','Su','Tib','Tro','Uvo','Ura','Vex','Val','Ven',
+   'Woo','Wig','Wab','Xi','Xu','Xeno','Zet','Zon','Zorb','Zran'  
+]
+NAME_MIDDLES = [
+   'oo','max','aur','ax','ain','ep','ephre','mig','ing','aul','too','min','ph','quo','qua','li',
+   'lu','moo','mar','ige',
+]
+NAME_ENDINGS = [
+   'is','ars','une','nus','toh','tune','th','-alpha',
+]
+def generate_name():
+   middle_count = random.choice([0,0,0,0,1,1,1,1,2])
+   middle = ""
+   for i in range(middle_count):
+      middle += random.choice(NAME_MIDDLES)
+   return random.choice(NAME_PREFIXES)+middle+random.choice(NAME_ENDINGS)+'-'+str(random.randrange(0,100))+random.choice('ABCDGXZ')
 
 class ColorMap(object):
    SHEET_SIZE = 128
@@ -138,7 +159,6 @@ class PlanetSprite(object):
       self.cityscape = Cityscape(city_spritesheet)
       self.atmosphere = atmosphere
       self.clouds = clouds
-      
       self.day_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.night_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.planet_sprite = biomemap.make_surface()
@@ -217,19 +237,28 @@ class PlanetSpriteFactory(object):
       )
 
 if __name__ == "__main__":
+   for i in range(0,100):
+      print(generate_name())
    pygame.init()
    screen = pygame.display.set_mode((256,256))
    clock = pygame.time.Clock()
-   def load(tfile,pfile,cindex,bindex):
-      color_sheet = pygame.image.load(tfile).convert_alpha()
-      biomes_sheet = pygame.image.load(pfile).convert_alpha()
-      shadow = pygame.image.load("img/shadow_outline.png").convert_alpha()
-      city = pygame.image.load("img/cityscapes.png").convert_alpha()
-      cmap = ColorMap(color_sheet,pygame.Rect(cindex*ColorMap.SHEET_SIZE,0,ColorMap.SHEET_SIZE,ColorMap.SHEET_SIZE))
-      bmap = BiomeMap(biomes_sheet,pygame.Rect(bindex*160,0,160,160))
-      psprite = PlanetSprite(None,(128,128),bmap,cmap,city,shadow)
-      return psprite
-   psprite = load("img/terrain.png","img/planet.png",0,1)
+   def load(cindex,bindex):
+      planet_factory = PlanetSpriteFactory(
+         pygame.image.load("img/terrain.png").convert_alpha(),
+         pygame.image.load("img/planet.png").convert_alpha(),
+         pygame.image.load("img/cityscapes.png").convert_alpha(),
+         pygame.image.load("img/atmosphere_color.png").convert_alpha(),
+         pygame.image.load("img/AtmosphereWhite.png").convert_alpha(),
+         pygame.image.load("img/Clouds.png").convert_alpha(),
+      )
+      return planet_factory.make_planet(None,(128,128),bindex,cindex)
+   class DummyCamera(object):
+      def __init__(self):
+         self.zoom = 1
+         self.scaled_shadow = pygame.image.load("img/shadow_outline.png").convert_alpha()
+      def cam(self,pos):
+         return pos
+   psprite = load(0,1)
    cindex = 0
    bindex = 1
    report = "Colormap {}, biome map {}".format(cindex,bindex)
@@ -237,6 +266,7 @@ if __name__ == "__main__":
    text = font.render(report, True, (255,255,255))
    population = 0.5
    tech = 0.5
+   camera = DummyCamera()
    while True:
       dt = clock.tick(30)
       for event in pygame.event.get():
@@ -248,19 +278,19 @@ if __name__ == "__main__":
                pygame.quit()
                exit()
             elif event.key == K_SPACE:
-               psprite = load("img/terrain.png","img/planet.png",cindex,bindex)
+               psprite = load(cindex,bindex)
             elif event.key == K_UP:
                cindex = (cindex+1) % 16
-               psprite = load("img/terrain.png","img/planet.png",cindex,bindex)
+               psprite = load(cindex,bindex)
             elif event.key == K_DOWN:
                cindex = (cindex-1) % 16
-               psprite = load("img/terrain.png","img/planet.png",cindex,bindex)
+               psprite = load(cindex,bindex)
             elif event.key == K_LEFT:
                bindex = (bindex-1) % 5
-               psprite = load("img/terrain.png","img/planet.png",cindex,bindex)
+               psprite = load(cindex,bindex)
             elif event.key == K_RIGHT:
                bindex = (bindex+1) % 5
-               psprite = load("img/terrain.png","img/planet.png",cindex,bindex)
+               psprite = load(cindex,bindex)
             report = "Colormap {}, biome map {}".format(cindex,bindex)
             text = font.render(report, True, (255,255,255))
       pressed = pygame.key.get_pressed()
@@ -277,8 +307,9 @@ if __name__ == "__main__":
       templevel = (templevel - 128) / 128
       sealevel = (sealevel - 128) / 128
       screen.fill((0,0,0))
-      psprite.set_parameters(sealevel,templevel,population,tech) 
-      psprite.draw(screen)
+      psprite.set_parameters(sealevel,templevel,population,tech)
+      psprite.update()
+      psprite.draw(screen,camera)
       pygame.draw.circle(screen,(255,0,255),(int(population*256),int(tech*256)),4)
       screen.blit(text,(0,0))
       pygame.display.flip()
