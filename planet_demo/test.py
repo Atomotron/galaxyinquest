@@ -11,6 +11,7 @@ pygame.init()
 screenWidth = 1024
 screenHeight = 768
 screen = pygame.display.set_mode((screenWidth, screenHeight))
+
 # Load Pictures
 background = pygame.image.load("../img/wow.png").convert_alpha()
 player_sheet = pygame.image.load("../img/spritecolor_v2.png").convert_alpha()
@@ -117,6 +118,28 @@ class Player(object):
         self.pos[1] += self.velocity[1] *dt
         self.pos[0] += self.velocity[0] *dt
         self.rotation += self.angularmom * dt
+    def move2(self,dt):
+        dt = dt/14
+        pressed = pygame.mouse.get_pressed()
+        if pressed[0]:
+            self.velocity[1] -= 0.1 * np.cos(self.rotation * 3.14 / 180) *dt
+            self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180) *dt
+        if (self.velocity[0] <= (-1 * self.MaxVelocity)):
+            self.velocity[0] = (-1 * self.MaxVelocity)
+        if (self.velocity[1] <= (-1 * self.MaxVelocity)):
+            self.velocity[1] = (-1 * self.MaxVelocity)
+        if (self.velocity[0] >= self.MaxVelocity):
+            self.velocity[0] = self.MaxVelocity
+        if (self.velocity[1] >= self.MaxVelocity):
+            self.velocity[1] = self.MaxVelocity
+        X,Y = pygame.mouse.get_pos()
+        self.rotation = -math.atan2(Y-self.pos[1],X-self.pos[0]) * (180/3.14) - 90
+        self.velocity[0] += self.acc[0] *dt
+        self.velocity[1] += self.acc[1] *dt
+        self.pos[1] += self.velocity[1] *dt
+        self.pos[0] += self.velocity[0] *dt
+        self.rotation += self.angularmom * dt
+        self.sprite = pygame.transform.rotate(self.sprite2, self.rotation)
     def abuSalehBreaks(self,dt):
         dt = dt / 14
         pressed = pygame.key.get_pressed()
@@ -145,8 +168,8 @@ class Player(object):
         dist = np.sqrt(((xplanet - xself) ** 2) + ((yplanet - yself) ** 2))
         cos = (xplanet - xself) / dist
         sin = (yplanet - yself) / dist
-        planetAcc[0] = cos * (X.mass / (dist))
-        planetAcc[1] = sin * (X.mass / (dist))
+        planetAcc[0] = cos * (X.mass / (dist*dist))
+        planetAcc[1] = sin * (X.mass / (dist*dist))
         return planetAcc
 
     def accUpdater(self,dt):
@@ -196,7 +219,7 @@ class Player(object):
         self.wrapAround()
         if not(pressed[pygame.K_s]) and not collided:
             self.accUpdater(dt)
-        self.move(dt)
+        self.move2(dt)
         self.centerPos = (
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         if pressed[pygame.K_f]:
@@ -218,10 +241,7 @@ class Planet(object):
     def update(self):
         self.draw()
         
-        
-        
-        
-        
+
         
 class PlanetSpriteLoader(object):
     
@@ -235,9 +255,7 @@ class PlanetSpriteLoader(object):
         self.tech = tech
         self.sealevel= sealevel
         self.templevel = templevel
-        
-        
-        
+
     
     def load(self):
         color_sheet = pygame.image.load(self.tfile).convert_alpha()
@@ -255,20 +273,18 @@ class PlanetSpriteLoader(object):
         psprite.tick(dt)
         psprite.set_parameters(self.sealevel,self.templevel,self.population,self.tech) 
         psprite.draw(screen)
+
         
-   
-
-
 if __name__ == "__main__":
 
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
 
     clock = pygame.time.Clock()  # A clock to keep track of time
     world = World(background, screen.get_rect())
-    planet = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 10, (500, 500))
-    planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 10, (500, 20))
+    planet = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 600, (screenWidth / 2, screenHeight / 2))
+    #planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 600, (500, 20))
     player = Player(spritesheet.subsurface(source_rects["jet"]), screen, [(screenWidth / 2) - 25, screenHeight / 2],
-                    [(0), (0)], [0, 0], [planet, planet2])
+                    [(0), (0)], [0, 0], [planet])
 
 
 
@@ -280,6 +296,7 @@ if __name__ == "__main__":
     report = "Colormap {}, biome map {}".format(cindex,bindex)
     font = pygame.font.Font('LiberationSans-Regular.ttf', 12)  
     text = font.render(report, True, (255,255,255))
+   
     
     
     while True:
@@ -297,7 +314,7 @@ if __name__ == "__main__":
         planetSpriteLoader.update(psprite,dt)
         
         planet.update()
-        planet2.update()
+        #planet2.update()
         player.update(dt)
         
         
