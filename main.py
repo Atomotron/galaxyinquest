@@ -6,6 +6,40 @@ import numpy as np
 from util import vfloor,vfloat
 import planet
 
+class PlanetModel(object):
+   '''A model of the evolution of a planet. Set to randomly increase and decrease parameters kind of like the stock market.'''
+   REFRESH_TIME = 1000/2 # refresh no fewer than 2 times per second
+   SPEED = 0.002 # average change to parameters each milisecond
+   PULL_TO_CENTER = 0.0002
+   def __init__(self,universe,planet_sprite):
+      self.universe = universe
+      self.universe.things.append(self) # we want to receive ticks
+      self.planet_sprite = planet_sprite
+      self.staleness = 0 # a counter for time
+      self.refresh_time = 0
+      # Choose random starting values
+      self.sea = np.random.uniform(-1.0,1.0)
+      self.temp = np.random.uniform(-1.0,1.0)
+      self.pop = np.random.uniform(0.0,1.0)
+      self.tech = np.random.uniform(0.0,1.0)
+   def random_delta(self,dt,value,off_center):
+      step = np.random.uniform(-1.0,1.0)*self.SPEED*dt
+      restoration = - self.PULL_TO_CENTER*off_center*dt
+      return value + step + restoration
+   def tick(self,dt):
+      # Randomly increase or decrease parameters, but keep them bounded
+      self.sea = np.clip(self.random_delta(dt,self.sea,self.sea), -1,1)
+      self.temp = np.clip(self.random_delta(dt,self.temp,self.temp), -1,1)
+      self.pop = np.clip(self.random_delta(dt,self.pop,self.pop-0.5), 0,1)
+      self.tech = np.clip(self.random_delta(dt,self.tech,self.tech-0.5), 0,1)
+      # Update the sprite if we have gone too long without doing so
+      if self.staleness > self.refresh_time:
+         self.refresh_time = np.random.uniform(0.0,self.REFRESH_TIME)
+         self.staleness = 0
+         self.planet_sprite.set_parameters(self.sea,self.temp,self.pop,self.tech)
+      self.staleness += dt
+      
+      
 
 class Gravitator(object):
    def __init__(self,universe,pos,mass,radius):
@@ -30,7 +64,7 @@ class Player(object):
    G = 1 # The strength of the force of gravity
    THRUST = 0.001
    BOUNCE_DAMP = 0.1
-   ABUSALEHBREAKS = 0.005
+   ABUSALEHBREAKS = 0.005 # I will put this in properly tomorrow
    
    def __init__(self,universe,spritesheet,rects,pos,angle=0,vel=(0,0)):
       self.universe = universe
@@ -69,10 +103,8 @@ class Player(object):
       return (np.array((
          self.THRUST*np.cos(self.angle),
          self.THRUST*np.sin(self.angle),
-      )) if pygame.mouse.get_pressed()[0] else np.array((0.0,0.0))) + \
-      (-self.vel * self.ABUSALEHBREAKS if pygame.key.get_pressed()[K_SPACE] else \
-      np.array((0.0,0.0)))
-  
+      )) if pygame.mouse.get_pressed()[0] else np.array((0.0,0.0)))
+      
    def collide(self):
       '''Check if we're inside a planet, and get us out if we are.'''
       for gravitator in self.universe.gravitators:
@@ -147,11 +179,12 @@ class Universe(object):
       for thing in self.things:
          thing.tick(dt)
    def add_planet(self,pos,mass):
-      self.planet_factory.make_planet(self,pos)
+      PlanetModel(self,self.planet_factory.make_planet(self,pos))
       Gravitator(self,pos,mass,80)
    def populate(self):
       self.add_planet((500,500),20)
       self.add_planet((800,200),20)
+      self.add_planet((200,200),20)
 
 if __name__ == "__main__":
    pygame.init()
