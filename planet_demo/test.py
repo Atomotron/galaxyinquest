@@ -136,7 +136,7 @@ class Player(object):
         
         dt = dt/14
         pressed = pygame.mouse.get_pressed()
-        released = pygame.mouse.get_release()
+        
         
         self.thrust = False
         self.killThrust= False
@@ -148,7 +148,7 @@ class Player(object):
             self.velocity[1] -= 0.1 * np.cos(self.rotation * 3.14 / 180) *dt
             self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180) *dt
             
-        if released[0]:
+        else:
             self.thrust = False
             self.killThrust = True
 
