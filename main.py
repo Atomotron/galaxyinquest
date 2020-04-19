@@ -60,7 +60,7 @@ class Gravitator(object):
 
 class Player(object):
    RADIUS = 24 # radius for physics purposes
-   G = 1 # The strength of the force of gravity
+   G = 0.1 # The strength of the force of gravity
    THRUST = 0.001
    BOUNCE_DAMP = 0.4
    ABUSALEHBREAKS = 0.005 # I will put this in properly tomorrow
