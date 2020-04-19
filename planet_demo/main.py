@@ -89,6 +89,7 @@ class Cityscape(object):
           surface.get_height()//2 + dx[1] - rotated_image.get_height()//2)
       )
    def stamp(self,surface,day=True,population=0,tech=0):
+       
       dtheta = 360 / self.NUM_SLOTS
       for i,index in enumerate(self.sprite_indices):
          if self.pop_bias[i] > population:
@@ -99,6 +100,7 @@ class Cityscape(object):
 
 class PlanetSprite(object):
    CANVAS_SIZE = (256,256)
+   
    def __init__(self,pos,biomemap,colormap,city_spritesheet,shadow,scale=1,omega=0.005,theta=0):
       self.pos = pos
       self.theta = theta
@@ -112,10 +114,13 @@ class PlanetSprite(object):
       self.day_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.night_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.planet_sprite = biomemap.make_surface()
+      
    def tick(self,dt):
       self.theta += self.omega * dt
+      
    def blit_centered(self,dst,src,src_rect):
       dst.blit(src,(dst.get_width()//2 - src_rect.width//2,dst.get_height()//2 - src_rect.height//2),src_rect)
+      
    def set_parameters(self,sealevel,templevel,population,tech):
       self.biomemap.stamp(sealevel,templevel,self.colormap,self.planet_sprite)
       # Day
@@ -126,7 +131,9 @@ class PlanetSprite(object):
       self.night_canvas.fill((0,0,0,0))
       self.cityscape.stamp(self.night_canvas,False,population)
       self.blit_centered(self.night_canvas,self.planet_sprite,self.planet_sprite.get_rect())
+      
    def draw(self,surface):
+       
       day = pygame.transform.rotozoom(self.day_canvas,self.theta,self.scale)
       night = pygame.transform.rotozoom(self.night_canvas,self.theta,self.scale)
       day_pos = (
@@ -149,6 +156,7 @@ if __name__ == "__main__":
    pygame.init()
    screen = pygame.display.set_mode((256,256))
    clock = pygame.time.Clock()
+   
    def load(tfile,pfile,cindex,bindex):
       color_sheet = pygame.image.load(tfile).convert_alpha()
       biomes_sheet = pygame.image.load(pfile).convert_alpha()
@@ -158,6 +166,7 @@ if __name__ == "__main__":
       bmap = BiomeMap(biomes_sheet,pygame.Rect(bindex*160,0,160,160))
       psprite = PlanetSprite((128,128),bmap,cmap,city,shadow)
       return psprite
+  
    psprite = load("terrain.png","planet.png",0,1)
    cindex = 0
    bindex = 1
@@ -166,6 +175,7 @@ if __name__ == "__main__":
    text = font.render(report, True, (255,255,255))
    population = 0.5
    tech = 0.5
+   
    while True:
       dt = clock.tick(30)
       for event in pygame.event.get():
@@ -192,6 +202,7 @@ if __name__ == "__main__":
                psprite = load("terrain.png","planet.png",cindex,bindex)
             report = "Colormap {}, biome map {}".format(cindex,bindex)
             text = font.render(report, True, (255,255,255))
+            
       pressed = pygame.key.get_pressed()
       if pressed[K_w]:
          population += 0.001*dt
@@ -201,6 +212,7 @@ if __name__ == "__main__":
          tech -= 0.001*dt
       if pressed[K_d]:
          tech += 0.001*dt
+         
       psprite.tick(dt)
       sealevel,templevel = pygame.mouse.get_pos()
       templevel = (templevel - 128) / 128
