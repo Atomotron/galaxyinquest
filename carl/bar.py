@@ -6,6 +6,7 @@ from pygame.locals import *
 
 
 
+
 class bar_chart(object):
     def __init__(self,bar_back,full_bar,empty_bar,pos):
         self.pos = pos
