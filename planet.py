@@ -4,6 +4,8 @@ from pygame.locals import *
 import pygame.surfarray as surfarray
 import numpy as np
 
+from util import vfloor,vfloat
+
 class ColorMap(object):
    SHEET_SIZE = 128
    def __init__(self,sheet,rect):
@@ -103,84 +105,93 @@ class Atmosphere(object):
       self.colormap = surfarray.array3d(colormap)
       self.atmosphere = atmosphere
       self.mult_canvas = pygame.Surface(atmosphere.get_size(),SRCALPHA,32)
-   def stamp(self,surface,sealevel,templevel):
+      self.canvas = pygame.Surface(atmosphere.get_size(),SRCALPHA,32)
+   def draw_at(self,surface,pos,scale,sealevel,templevel):
       color = self.colormap[
          min(self.colormap.shape[0]-1,max(0,int((templevel/2+0.5)*self.colormap.shape[0]))),
          min(self.colormap.shape[0]-1,max(0,int((sealevel/2+0.5)*self.colormap.shape[1])))
       ]
       self.mult_canvas.fill(color)
-      center_pos = (surface.get_width()//2-self.atmosphere.get_width()//2,surface.get_height()//2-self.atmosphere.get_height()//2)
-      surface.blit(self.atmosphere,center_pos)
-      surface.blit(self.mult_canvas,center_pos,special_flags=BLEND_RGBA_MULT)
-      
+      self.canvas.fill((0,0,0,0))
+      self.canvas.blit(self.atmosphere,(0,0))
+      self.canvas.blit(self.mult_canvas,(0,0),special_flags=BLEND_RGBA_MULT)
+      scaled = pygame.transform.rotozoom(self.canvas,0,scale)
+      center_pos = (pos[0]-scaled.get_width()//2,pos[1]-scaled.get_height()//2)
+      return surface.blit(scaled,center_pos)
 
 class PlanetSprite(object):
    CANVAS_SIZE = (256,256)
-   ROTATION_SPEED = 0.01
-   def __init__(self,universe,pos,biomemap,colormap,city_spritesheet,shadow,atmosphere,clouds):
+   ROTATION_SPEED = 0.0002
+   def __init__(self,universe,pos,biomemap,colormap,city_spritesheet,atmosphere,clouds):
       self.universe = universe
       if universe:
          universe.things.append(self)
          universe.sprites.append(self)
-      self.pos = pos
+      self.pos = vfloat(pos)
       self.theta = np.random.uniform(0,360)
       self.cloud_theta = np.random.uniform(0,360)
       self.omega = np.random.uniform(-1.0,1.0)*self.ROTATION_SPEED
       self.cloud_omega = np.random.uniform(-1.0,1.0)*self.ROTATION_SPEED + self.omega
-      self.scale = np.random.uniform(0.9,1.1)
+      self.scale = 1
       self.colormap = colormap
       self.biomemap = biomemap
       self.cityscape = Cityscape(city_spritesheet)
-      self.shadow = pygame.transform.rotozoom(shadow,0,self.scale)
       self.atmosphere = atmosphere
       self.clouds = clouds
       
       self.day_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.night_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.planet_sprite = biomemap.make_surface()
-      self.set_parameters(0,0,0,0)
+      self.parameters = [0,0,0,0]
+      self.update()
    def tick(self,dt):
       self.theta += self.omega * dt
       self.cloud_theta += self.cloud_omega * dt
    def blit_centered(self,dst,src,src_rect):
       dst.blit(src,(dst.get_width()//2 - src_rect.width//2,dst.get_height()//2 - src_rect.height//2),src_rect)
    def set_parameters(self,sealevel,templevel,population,tech):
+      self.parameters = [sealevel,templevel,population,tech]
+   def update(self):
+      sealevel,templevel,population,tech = self.parameters
+      '''Update sprite to match parameters'''
       self.biomemap.stamp(sealevel,templevel,self.colormap,self.planet_sprite)
       # Day
       self.day_canvas.fill((0,0,0,0))
-      self.atmosphere.stamp(self.day_canvas,sealevel,templevel)
       self.cityscape.stamp(self.day_canvas,True,population,tech)
       self.blit_centered(self.day_canvas,self.planet_sprite,self.planet_sprite.get_rect())
       # Night
       self.night_canvas.fill((0,0,0,0))
-      self.atmosphere.stamp(self.night_canvas,sealevel,templevel)
       self.cityscape.stamp(self.night_canvas,False,population,tech)
       self.blit_centered(self.night_canvas,self.planet_sprite,self.planet_sprite.get_rect())
-   def draw(self,surface):
-      day = pygame.transform.rotozoom(self.day_canvas,self.theta,self.scale)
-      night = pygame.transform.rotozoom(self.night_canvas,self.theta,self.scale)
-      clouds = pygame.transform.rotozoom(self.clouds,self.cloud_theta,self.scale)
-      r = surface.blit(
-         day,
-         (self.pos[0],self.pos[1] - night.get_height()//2),
-         pygame.Rect(day.get_width()//2,0,day.get_width()//2,day.get_height()) 
-      )
-      r = r.union(surface.blit(
-         night,
-         (self.pos[0] - night.get_width()//2,self.pos[1] - night.get_height()//2),
-         pygame.Rect(0,0,night.get_width()//2,night.get_height()) 
-      ))
+   def draw(self,surface,camera):
+      angle = self.theta * 180 / np.pi
+      scale = camera.zoom*self.scale
+      pos = vfloor(camera.cam(self.pos))
+      day = pygame.transform.rotozoom(self.day_canvas,angle,scale)
+      night = pygame.transform.rotozoom(self.night_canvas,angle,scale)
+      clouds = pygame.transform.rotozoom(self.clouds,self.cloud_theta*180/np.pi,scale)
+      r = self.atmosphere.draw_at(surface,pos,scale,self.parameters[0],self.parameters[1])
       r = r.union(surface.blit(
          clouds,
-         (self.pos[0] - clouds.get_width()//2,self.pos[1] - clouds.get_height()//2)
+         (pos[0] - clouds.get_width()//2,pos[1] - clouds.get_height()//2)
+      ))
+      r = r.union(surface.blit(
+         day,
+         (pos[0],pos[1] - night.get_height()//2),
+         pygame.Rect(day.get_width()//2,0,day.get_width()//2,day.get_height()) 
+      ))
+      r = r.union(surface.blit(
+         night,
+         (pos[0] - night.get_width()//2,pos[1] - night.get_height()//2),
+         pygame.Rect(0,0,night.get_width()//2,night.get_height()) 
       ))
       return r.union(surface.blit(
-         self.shadow,
-         (self.pos[0] - self.shadow.get_width()//2,self.pos[1] - self.shadow.get_height()//2)
+         camera.scaled_shadow,
+         (pos[0] - camera.scaled_shadow.get_width()//2,pos[1] - camera.scaled_shadow.get_height()//2)
       ))
 
 class PlanetSpriteFactory(object):
-   def __init__(self,color_sheet,biomes_sheet,city_spritesheet,shadow,atmosphere_colormap,atmosphere,clouds):
+   def __init__(self,color_sheet,biomes_sheet,city_spritesheet,atmosphere_colormap,atmosphere,clouds):
       self.biome_maps = [
          BiomeMap(biomes_sheet,pygame.Rect(i*BiomeMap.SHEET_SIZE,0,BiomeMap.SHEET_SIZE,BiomeMap.SHEET_SIZE))
          for i in range(0,biomes_sheet.get_width()//BiomeMap.SHEET_SIZE)
@@ -190,7 +201,6 @@ class PlanetSpriteFactory(object):
          for i in range(0,color_sheet.get_width()//ColorMap.SHEET_SIZE)
       ]
       self.city_spritesheet = city_spritesheet
-      self.shadow = shadow
       self.atmosphere = Atmosphere(atmosphere_colormap,atmosphere)
       self.clouds = clouds
    def make_planet(self,universe,pos,bindex=None,cindex=None):
@@ -202,7 +212,6 @@ class PlanetSpriteFactory(object):
          self.biome_maps[bindex%len(self.biome_maps)],
          self.color_maps[cindex%len(self.color_maps)],
          self.city_spritesheet,
-         self.shadow,
          self.atmosphere,
          self.clouds
       )
