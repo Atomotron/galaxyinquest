@@ -127,18 +127,19 @@ class Player(object):
    def draw(self,screen,camera):
       axis = np.array((np.cos(self.angle),np.sin(self.angle))) * camera.zoom
       pos = camera.cam(self.pos)
+      postfix = "_glow" if self.thrusting else ""
       rotated_U = pygame.transform.rotozoom(
-         self.sprites["U"],
+         self.sprites["U"+postfix],
          -self.angle*(180/np.pi)-90,
          camera.zoom
       )
       scaled_orb_small = pygame.transform.rotozoom(
-         self.sprites["orb_small"],
+         self.sprites["orb_small"+postfix],
          0,
          camera.zoom
       )
       scaled_orb_large = pygame.transform.rotozoom(
-         self.sprites["orb_large"],
+         self.sprites["orb_large"+postfix],
          0,
          camera.zoom
       )
@@ -234,7 +235,6 @@ class Universe(object):
       self.add_planet((-300,-300),20)
 
 if __name__ == "__main__":
-   pygame.mixer.pre_init(44100, -16, 2, 512)
    pygame.mixer.pre_init(44100, -16, 2, 1024)
    pygame.init()
    screen_size = (1024,768)
@@ -258,8 +258,11 @@ if __name__ == "__main__":
       universe,pygame.image.load("img/ship58h.png").convert_alpha(),
       {
          'U': Rect(0,0,52,58),
-         'orb_small': Rect(52,0,10,10),
+         'orb_small': Rect(57,44,10,10),
          'orb_large': Rect(52,10,28,29),
+         'U_glow': Rect(0,58,52,58),
+         'orb_small_glow': Rect(52,97,19,19),
+         'orb_large_glow': Rect(52,68,28,29),
       },
       {
          'bounce':pygame.mixer.Sound("sounds/bounce_planet_short.ogg"),
