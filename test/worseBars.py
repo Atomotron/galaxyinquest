@@ -27,26 +27,19 @@ class Bar():
         self.height = 0
         self.increasing = False
         
-    def draw(self):
-        pygame.draw.rect(self.screen,self.color,(self.pos,(self.sizeX,self.sizeY)))
+   
         
     def update(self,dv):
 
-        
-        
-        if((self.variable+dv) <= 1 and self.increasing):
+        if((self.variable+dv) <= 1 and (self.variable+dv) >=0 ):
             self.variable += dv
-            if(self.variable >= (1-dv)):
-                self.increasing = False
-            
-        if((self.variable-dv) >=0 and not self.increasing):
-            self.variable -= dv
-            if(self.variable <= dv):
-                self.increasing = True
+
+
+
         
         newSize =  (self.sizeY * self.variable)
         pygame.draw.rect(self.screen,self.color,((self.pos[0],(self.pos[1]+(self.sizeY * (1-self.variable)))),(self.sizeX,newSize)))
-        wow = " = {:.0f}".format( self.variable * 100 )
+        wow = "{:.0f}".format( self.variable * 100 )
         outputText = str(self.barName) + ": %" + str(wow) 
         
         font = pygame.font.Font('LiberationSans-Regular.ttf', 12)
@@ -58,10 +51,13 @@ class Bar():
 
 
 if __name__ == "__main__":
-    tempBar = Bar(screen,(150,300),0.1,(255,0,0),"Temp")
-    popBar = Bar(screen,(350,300),0.5,(0,255,0),"Pop")
-    seaBar = Bar(screen,(550,300),0.75,(255,255,0),"Sea")
-    techBar = Bar(screen,(750,300),1,(0,0,255),"Tech")
+    
+    temp=pop=sea=tech=0.5
+    
+    tempBar = Bar(screen,(150,300),temp,(255,0,0),"Temp")
+    popBar = Bar(screen,(350,300),pop,(0,255,0),"Pop")
+    seaBar = Bar(screen,(550,300),sea,(255,255,0),"Sea")
+    techBar = Bar(screen,(750,300),tech,(0,0,255),"Tech")
     
 
     
@@ -79,9 +75,19 @@ if __name__ == "__main__":
     
         
         screen.fill((0,0,0))
-        tempBar.update(0.01)
-        popBar.update(0.01)
-        seaBar.update(0.01)
-        techBar.update(0.01)
+        tempBar.update(-0.01)
+        popBar.update(-0.01)
+        seaBar.update(-0.01)
+        techBar.update(-0.01)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         pygame.display.flip()
