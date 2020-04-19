@@ -35,8 +35,6 @@ class Bar():
             self.variable += dv
 
 
-
-        
         newSize =  (self.sizeY * self.variable)
         pygame.draw.rect(self.screen,self.color,((self.pos[0],(self.pos[1]+(self.sizeY * (1-self.variable)))),(self.sizeX,newSize)))
         wow = "{:.0f}".format( self.variable * 100 )
@@ -59,33 +57,58 @@ if __name__ == "__main__":
     seaBar = Bar(screen,(550,300),sea,(255,255,0),"Sea")
     techBar = Bar(screen,(750,300),tech,(0,0,255),"Tech")
     
+    dTemp = 0.0
+    dPop = 0.000
+    dSea = 0.0
+    dTech = 0.0001
+    
+    temp = tempBar.variable
+    tech = techBar.variable
+    pop = popBar.variable
+    sea = seaBar.variable
+    
+    PopTempModifier = 0
+    PopSeaModifier = 0
+    TempTechModifier = 0
+    TempSeaModifier = 0
+    SeaTempModifier = 0
 
     
     
     while True:
+
+        temp = tempBar.variable
+        tech = techBar.variable
+        pop = popBar.variable
+        sea = seaBar.variable
         
-        
-        
-        if Tech > 0.8:
-            TempTechModifier = 0 #(We've learned to make our technology net zero).
-        elif Tech < 0.8:
-            TempTechModifier = (0.8-Tech)/100
-        if (Temp < 0.6 and Temp > 0.4):
-            TechTempModifier = +Ve Number
-            PopTempModifier = +Ve Number
+        if tech > 0.8:
+            TempTechModifier = 0  
+        elif tech < 0.8:
+            TempTechModifier = (0.8 - tech) / 100
+            
+        if temp < 0.6 and temp > 0.4:
+            TechTempModifier = 0.001
+            PopTempModifier = 0.001
             SeaTempModifier = 0
-        elif Temp < 0.4:
-            TechTempModifier = -Ve Number
-            PopTempModifier = -Ve Number
-            SeaTempModifier = -Ve Number
-        elif Temp > 0.6:
-            TechTempModifier = -Ve Number
-            PopTempModifier = -Ve Number
-            SeaTempModifier = +Ve Number
-            dTemp = Pop+ve +  TempTechModifier
-            dTech = 0.001 (baseline) + TechTempModifier + Pop+ve
-            dPop  = 0.001 (baseline) + PopTempModifier+ PopSeaModifier+ Tech*+ve
-            dSea = SeaTempModifier
+        elif temp < 0.4:
+            TechTempModifier = -0.003
+            PopTempModifier = -0.003
+            SeaTempModifier = -0.001
+        elif temp > 0.6:
+            TechTempModifier = -0.003
+            PopTempModifier = -0.003
+            SeaTempModifier = +0.001
+                
+                
+        dTemp = (pop * 0.02) + TempTechModifier
+        dTech = 0.001 + TechTempModifier + (pop * 0.02)
+        dPop = 0.001 + PopTempModifier + PopSeaModifier + (tech * 0.02)
+        dSea = SeaTempModifier
+        
+   
+        print(sea)
+        
 
         clock.tick(60) 
         for event in pygame.event.get(): 
@@ -98,10 +121,11 @@ if __name__ == "__main__":
     
         
         screen.fill((0,0,0))
-        tempBar.update(-0.01)
-        popBar.update(-0.01)
-        seaBar.update(-0.01)
-        techBar.update(-0.01)
+        
+        tempBar.update(dTemp)
+        popBar.update(dPop)
+        seaBar.update(dSea)
+        techBar.update(dTech)
         
         
         
