@@ -77,7 +77,8 @@ class Player(object):
    def gravity_at(self,pos):
       '''Computes the acceleration due to gravity due to a body.'''
       g = np.array((0.0,0.0))
-      for gravitator in self.universe.gravitators:
+      gravitators = [self.connected_planet] if self.connected_planet else self.universe.gravitators
+      for gravitator in gravitators:
          r = gravitator.pos - self.pos
          r_mag_raised_to_three = np.power(np.sum(np.square(r)),3/2)
          g += self.G*gravitator.mass*r / r_mag_raised_to_three
