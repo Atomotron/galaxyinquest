@@ -31,7 +31,6 @@ class BiomeMap(object):
       np.bitwise_and(output,0xff,out=output)
       np.floor_divide(output,256//ColorMap.SHEET_SIZE,out=output)
       return output
-      #np.bitwise_and(np.right_shift(subsurface,shifts[0]),0xff)
    def dynamic_range(self,x):
       """Scale and clamp a floating point value between -1.0 and 1.0 to be between -SHEET_SIZE and SHEET_SIZE"""
       return min(ColorMap.SHEET_SIZE,max(-ColorMap.SHEET_SIZE, #clamp
@@ -40,7 +39,7 @@ class BiomeMap(object):
    def stamp(self,sealevel,templevel,colormap,surface):
       """Writes the planet sprite onto the given surface. Sealevel and templevel have dynamic range from -1.0 to 1.0"""
       sealevel = self.dynamic_range(sealevel)
-      templevel = self.dynamic_range(templevel)
+      templevel = self.dynamic_range(-templevel) # invert templevel
       data = surfarray.pixels2d(surface)
       np.copyto(data,self.alpha) # A clean slate
       # Temperature
@@ -98,23 +97,43 @@ class Cityscape(object):
          theta = dtheta*i
          tech_index = max(min(int(np.floor(self.tech_bias[i] + tech*(self.n_techs-1))),self.n_techs-1),0)
          self.stamp_building(surface,theta,index,day,tech_index)
-         
+
+class Atmosphere(object):
+   def __init__(self,colormap,atmosphere):
+      self.colormap = surfarray.array3d(colormap)
+      self.atmosphere = atmosphere
+      self.mult_canvas = pygame.Surface(atmosphere.get_size(),SRCALPHA,32)
+   def stamp(self,surface,sealevel,templevel):
+      color = self.colormap[
+         min(self.colormap.shape[0]-1,max(0,int((templevel/2+0.5)*self.colormap.shape[0]))),
+         min(self.colormap.shape[0]-1,max(0,int((sealevel/2+0.5)*self.colormap.shape[1])))
+      ]
+      self.mult_canvas.fill(color)
+      center_pos = (surface.get_width()//2-self.atmosphere.get_width()//2,surface.get_height()//2-self.atmosphere.get_height()//2)
+      surface.blit(self.atmosphere,center_pos)
+      surface.blit(self.mult_canvas,center_pos,special_flags=BLEND_RGBA_MULT)
+      
 
 class PlanetSprite(object):
    CANVAS_SIZE = (256,256)
-   def __init__(self,universe,pos,biomemap,colormap,city_spritesheet,shadow,scale=1,omega=0.005,theta=None):
+   ROTATION_SPEED = 0.01
+   def __init__(self,universe,pos,biomemap,colormap,city_spritesheet,shadow,atmosphere,clouds):
       self.universe = universe
       if universe:
          universe.things.append(self)
          universe.sprites.append(self)
       self.pos = pos
-      self.theta = theta or np.random.uniform(0,360)
-      self.omega = omega
-      self.scale = scale
+      self.theta = np.random.uniform(0,360)
+      self.cloud_theta = np.random.uniform(0,360)
+      self.omega = np.random.uniform(-1.0,1.0)*self.ROTATION_SPEED
+      self.cloud_omega = np.random.uniform(-1.0,1.0)*self.ROTATION_SPEED + self.omega
+      self.scale = np.random.uniform(0.9,1.1)
       self.colormap = colormap
       self.biomemap = biomemap
       self.cityscape = Cityscape(city_spritesheet)
-      self.shadow = shadow
+      self.shadow = pygame.transform.rotozoom(shadow,0,self.scale)
+      self.atmosphere = atmosphere
+      self.clouds = clouds
       
       self.day_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.night_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
@@ -122,21 +141,25 @@ class PlanetSprite(object):
       self.set_parameters(0,0,0,0)
    def tick(self,dt):
       self.theta += self.omega * dt
+      self.cloud_theta += self.cloud_omega * dt
    def blit_centered(self,dst,src,src_rect):
       dst.blit(src,(dst.get_width()//2 - src_rect.width//2,dst.get_height()//2 - src_rect.height//2),src_rect)
    def set_parameters(self,sealevel,templevel,population,tech):
       self.biomemap.stamp(sealevel,templevel,self.colormap,self.planet_sprite)
       # Day
       self.day_canvas.fill((0,0,0,0))
+      self.atmosphere.stamp(self.day_canvas,sealevel,templevel)
       self.cityscape.stamp(self.day_canvas,True,population,tech)
       self.blit_centered(self.day_canvas,self.planet_sprite,self.planet_sprite.get_rect())
       # Night
       self.night_canvas.fill((0,0,0,0))
+      self.atmosphere.stamp(self.night_canvas,sealevel,templevel)
       self.cityscape.stamp(self.night_canvas,False,population,tech)
       self.blit_centered(self.night_canvas,self.planet_sprite,self.planet_sprite.get_rect())
    def draw(self,surface):
       day = pygame.transform.rotozoom(self.day_canvas,self.theta,self.scale)
       night = pygame.transform.rotozoom(self.night_canvas,self.theta,self.scale)
+      clouds = pygame.transform.rotozoom(self.clouds,self.cloud_theta,self.scale)
       r = surface.blit(
          day,
          (self.pos[0],self.pos[1] - night.get_height()//2),
@@ -145,7 +168,11 @@ class PlanetSprite(object):
       r = r.union(surface.blit(
          night,
          (self.pos[0] - night.get_width()//2,self.pos[1] - night.get_height()//2),
-         pygame.Rect(0,0,day.get_width()//2,day.get_height()) 
+         pygame.Rect(0,0,night.get_width()//2,night.get_height()) 
+      ))
+      r = r.union(surface.blit(
+         clouds,
+         (self.pos[0] - clouds.get_width()//2,self.pos[1] - clouds.get_height()//2)
       ))
       return r.union(surface.blit(
          self.shadow,
@@ -153,7 +180,7 @@ class PlanetSprite(object):
       ))
 
 class PlanetSpriteFactory(object):
-   def __init__(self,color_sheet,biomes_sheet,city_spritesheet,shadow):
+   def __init__(self,color_sheet,biomes_sheet,city_spritesheet,shadow,atmosphere_colormap,atmosphere,clouds):
       self.biome_maps = [
          BiomeMap(biomes_sheet,pygame.Rect(i*BiomeMap.SHEET_SIZE,0,BiomeMap.SHEET_SIZE,BiomeMap.SHEET_SIZE))
          for i in range(0,biomes_sheet.get_width()//BiomeMap.SHEET_SIZE)
@@ -164,17 +191,20 @@ class PlanetSpriteFactory(object):
       ]
       self.city_spritesheet = city_spritesheet
       self.shadow = shadow
+      self.atmosphere = Atmosphere(atmosphere_colormap,atmosphere)
+      self.clouds = clouds
    def make_planet(self,universe,pos,bindex=None,cindex=None):
       bindex = bindex or np.random.randint(1,len(self.biome_maps)) # start at 1 because 0 is my thing
       cindex = cindex or np.random.randint(0,len(self.color_maps))
-      print("Making planet with",bindex,cindex)
       return PlanetSprite(
          universe,
          pos,
          self.biome_maps[bindex%len(self.biome_maps)],
          self.color_maps[cindex%len(self.color_maps)],
          self.city_spritesheet,
-         self.shadow
+         self.shadow,
+         self.atmosphere,
+         self.clouds
       )
 
 if __name__ == "__main__":
