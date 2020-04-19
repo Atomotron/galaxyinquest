@@ -66,14 +66,31 @@ if __name__ == "__main__":
     bar3 = bar_chart(bar_back, full_bar, empty_bar, pos3)
     bar4 = bar_chart(bar_back, full_bar, empty_bar, pos4)
     while True:
-        Temp += dTemp + Pop * 0.002 + Tech * 0.001
-        Tech += dTech + dPop * 0.1
-        if Temp > 0.10 and Temp < 0.30:
-            TempModifier = 1
-        else:
-            TempModifier = -1
-        Pop += dPop + TempModifier*0.0002 + Tech * 0.001
-        Sea += dSea + Temp * 0.0001
+        if Tech > 0.8:
+            TempTechModifier = 0  # (We've learned to make our technology net zero).
+        elif Tech < 0.8:
+            TempTechModifier = (0.8 - Tech) / 100
+        If Temp < 0.6 and Temp > 0.4:
+            TechTempModifier = 0.001
+            PopTempModifier = 0.001
+            SeaTempModifier = 0
+        elif Temp < 0.4:
+            TechTempModifier = -0.001
+            PopTempModifier = -0.001
+            SeaTempModifier = -0.001
+        elif Temp > 0.6:
+            TechTempModifier = -0.001
+            PopTempModifier = -0.001
+            SeaTempModifier = +0.001
+        dTemp = Pop * 0.02 + TempTechModifier
+        dTech = 0.001 + TechTempModifier + Pop * 0.02
+        dPop = 0.001 + PopTempModifier + PopSeaModifier + Tech * 0.02
+        dSea = SeaTempModifier
+
+        Temp += dTemp
+        Tech += dTech
+        Pop += dPop
+        Sea += dSea
         if Temp >= 1:
             Temp = 1
         if Pop >= 1:
