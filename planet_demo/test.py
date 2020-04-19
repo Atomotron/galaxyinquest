@@ -251,17 +251,8 @@ class PlanetSpriteLoader(object):
         psprite.tick(dt)
         psprite.set_parameters(self.sealevel,self.templevel,self.population,self.tech) 
         psprite.draw(screen)
-        pygame.draw.circle(screen,(255,0,255),(int(self.population*256),int(self.tech*256)),4)
-
-            
-  
-    
         
-        
-        
-        
-        
-        
+   
 
 
 if __name__ == "__main__":
