@@ -11,6 +11,7 @@ pygame.init()
 screenWidth = 1024
 screenHeight = 768
 screen = pygame.display.set_mode((screenWidth, screenHeight))
+
 # Load Pictures
 background = pygame.image.load("../img/wow.png").convert_alpha()
 player_sheet = pygame.image.load("../img/spritecolor_v2.png").convert_alpha()
@@ -272,6 +273,28 @@ class PlanetSpriteLoader(object):
         psprite.tick(dt)
         psprite.set_parameters(self.sealevel,self.templevel,self.population,self.tech) 
         psprite.draw(screen)
+<<<<<<< HEAD
+=======
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+class Sound():
+    
+    def __init__(self):
+        gameLoopSound = pygame.Sound.Load("../sounds/space_ambient.ogg")
+        
+   
+>>>>>>> 31b442b15a20aa602b40980962e12ed515f5c282
 
 
 if __name__ == "__main__":
@@ -295,6 +318,7 @@ if __name__ == "__main__":
     report = "Colormap {}, biome map {}".format(cindex,bindex)
     font = pygame.font.Font('LiberationSans-Regular.ttf', 12)  
     text = font.render(report, True, (255,255,255))
+   
     
     
     while True:
