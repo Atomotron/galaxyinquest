@@ -122,24 +122,34 @@ class Player(object):
       self.acc = new_acc # save acceleration for next frame
       
    def draw(self,screen,camera):
-      axis = np.array((np.cos(self.angle),np.sin(self.angle)))
+      axis = np.array((np.cos(self.angle),np.sin(self.angle))) * camera.zoom
       pos = camera.cam(self.pos)
-      rotated_sprite = pygame.transform.rotozoom(
+      rotated_U = pygame.transform.rotozoom(
          self.sprites["U"],
          -self.angle*(180/np.pi)-90,
-         1
+         camera.zoom
+      )
+      scaled_orb_small = pygame.transform.rotozoom(
+         self.sprites["orb_small"],
+         0,
+         camera.zoom
+      )
+      scaled_orb_large = pygame.transform.rotozoom(
+         self.sprites["orb_large"],
+         0,
+         camera.zoom
       )
       r = screen.blit(
-         self.sprites['orb_small'],
-         vfloor(pos - vfloat(self.sprites['orb_small'].get_size())/2 - axis*28)
+         scaled_orb_small,
+         vfloor(pos - vfloat(scaled_orb_small.get_size())/2 - axis*28)
       )
       r = r.union(screen.blit(
-         self.sprites['orb_large'],
-         vfloor(pos - vfloat(self.sprites['orb_large'].get_size())/2- axis*3)
+         scaled_orb_large,
+         vfloor(pos - vfloat(scaled_orb_large.get_size())/2- axis*3)
       ))
       return r.union(screen.blit(
-         rotated_sprite,
-         vfloor(pos - vfloat(rotated_sprite.get_size())/2)
+         rotated_U,
+         vfloor(pos - vfloat(rotated_U.get_size())/2)
       ))
       
 
