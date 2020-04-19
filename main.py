@@ -47,16 +47,16 @@ class Gravitator(object):
       self.pos = vfloat(pos) # convert to numpy array for that sweet operator overloading
       self.mass = mass
       self.radius = radius
-   def draw(self,screen):
+   def draw(self,screen,camera):
       return pygame.draw.circle(
          screen,
          (min(255,max(0,int(self.mass))),
           min(255,max(0,int(self.mass*255))),
           min(255,max(0,int(np.log(self.mass))))),
-         vfloor(self.pos),
-         int(self.radius),
-         2,
-      ) # return impacted pixels
+         vfloor(camera.cam(self.pos)),
+         int(self.radius*camera.zoom),
+         1,
+      ).inflate(1,0) # return impacted pixels
 
 class Player(object):
    RADIUS = 24 # radius for physics purposes
@@ -77,17 +77,6 @@ class Player(object):
       universe.sprites.append(self)
       universe.things.append(self)
       universe.player = self
-      
-   def wrap(self):
-      '''Enforce toroidal geometry'''
-      if self.pos[1] > self.universe.wrapping_rect.bottom + self.RADIUS:
-         self.pos[1] = self.universe.wrapping_rect.top-self.RADIUS
-      elif self.pos[1] < self.universe.wrapping_rect.top-self.RADIUS:
-         self.pos[1] = self.universe.wrapping_rect.bottom + self.RADIUS
-      if self.pos[0] > self.universe.wrapping_rect.right + self.RADIUS:
-         self.pos[0] = self.universe.wrapping_rect.left-self.RADIUS
-      elif self.pos[0] < self.universe.wrapping_rect.left-self.RADIUS:
-         self.pos[0] = self.universe.wrapping_rect.right + self.RADIUS
          
    def gravity_at(self,pos):
       '''Computes the acceleration due to gravity due to a body.'''
@@ -122,7 +111,7 @@ class Player(object):
             
    def tick(self,dt):
       # Point at the mouse
-      delta_to_mouse = vfloat(pygame.mouse.get_pos()) - self.pos
+      delta_to_mouse = self.universe.uncam(vfloat(pygame.mouse.get_pos())) - self.pos
       self.angle = np.arctan2(delta_to_mouse[1],delta_to_mouse[0]) 
       # Collide with planets
       self.collide()
@@ -131,11 +120,10 @@ class Player(object):
       new_acc = self.gravity_at(self.pos) + self.thrust()
       self.vel = self.vel + 0.5*dt*(self.acc + new_acc)
       self.acc = new_acc # save acceleration for next frame
-      # Enforce toroidal geometry
-      self.wrap()
       
-   def draw(self,screen):
+   def draw(self,screen,camera):
       axis = np.array((np.cos(self.angle),np.sin(self.angle)))
+      pos = camera.cam(self.pos)
       rotated_sprite = pygame.transform.rotozoom(
          self.sprites["U"],
          -self.angle*(180/np.pi)-90,
@@ -143,20 +131,20 @@ class Player(object):
       )
       r = screen.blit(
          self.sprites['orb_small'],
-         vfloor(self.pos - vfloat(self.sprites['orb_small'].get_size())/2 - axis*28)
+         vfloor(pos - vfloat(self.sprites['orb_small'].get_size())/2 - axis*28)
       )
       r = r.union(screen.blit(
          self.sprites['orb_large'],
-         vfloor(self.pos - vfloat(self.sprites['orb_large'].get_size())/2- axis*3)
+         vfloor(pos - vfloat(self.sprites['orb_large'].get_size())/2- axis*3)
       ))
       return r.union(screen.blit(
          rotated_sprite,
-         vfloor(self.pos - vfloat(rotated_sprite.get_size())/2)
+         vfloor(pos - vfloat(rotated_sprite.get_size())/2)
       ))
       
 
 class Universe(object):
-   def __init__(self,planet_factory,background,wrapping_rect=None):
+   def __init__(self,planet_factory,background,shadow,wrapping_rect=None):
       self.planet_factory = planet_factory
       self.background = background
       self.wrapping_rect = wrapping_rect or background.get_rect() # if wrapping_rect is null, use the background rect
@@ -166,29 +154,50 @@ class Universe(object):
       self.dirty_rects = [background.get_rect()] # patches of the background that will need to be redrawn
       self.player = None
       self.planets = []
+      self.shadow = shadow
+      self.scaled_shadow = shadow
+      self.zoom = 1
+      self.camera = np.array((0.0,0.0))
+      self.rect_offset = vfloat(self.wrapping_rect.size)/2 # To move the origin from the top left to the center of the screen
+      self.age = 0
       
+   def cam(self,pos):
+      '''Adjusts a position to take in to account our camera and zoom.'''
+      return (pos-self.camera)*self.zoom + self.rect_offset
+   
+   def uncam(self,pos):
+      '''Inverse of cam: takes screen space to world space'''
+      return (pos-self.rect_offset)/self.zoom + self.camera
+   
    def draw(self,screen):
       bg_rect = self.background.get_rect()
       for rect in self.dirty_rects:
          screen.blit(self.background,rect.topleft,rect.clip(bg_rect))
       touched_rects = self.dirty_rects
       self.dirty_rects = []
+      self.scaled_shadow = pygame.transform.rotozoom(self.shadow,0,self.zoom)
       for sprite in self.sprites:
-         rect = sprite.draw(screen)
+         rect = sprite.draw(screen,self)
          if rect: # If the draw function has created a dirty rect
             self.dirty_rects.append(rect)
             touched_rects.append(rect)
       return touched_rects
+
    def tick(self,dt):
+      self.age += 0.001*dt
+      self.zoom = np.sin(self.age)*0.4 + 0.6
+      self.camera = 400 * np.array((np.sin(3/10*self.age+np.pi/2),np.cos(4/10*self.age)))
       for thing in self.things:
          thing.tick(dt)
+         
    def add_planet(self,pos,mass):
       PlanetModel(self,self.planet_factory.make_planet(self,pos))
       Gravitator(self,pos,mass,80)
+
    def populate(self):
-      self.add_planet((500,500),20)
-      self.add_planet((800,200),20)
-      self.add_planet((200,200),20)
+      self.add_planet((-300,300),20)
+      self.add_planet((300,0),20)
+      self.add_planet((-300,-300),20)
 
 if __name__ == "__main__":
    pygame.mixer.pre_init(44100, -16, 2, 512)
@@ -201,12 +210,15 @@ if __name__ == "__main__":
       pygame.image.load("img/terrain.png").convert_alpha(),
       pygame.image.load("img/planet.png").convert_alpha(),
       pygame.image.load("img/cityscapes.png").convert_alpha(),
-      pygame.image.load("img/shadow_outline.png").convert_alpha(),
       pygame.image.load("img/atmosphere_color.png").convert_alpha(),
       pygame.image.load("img/AtmosphereWhite.png").convert_alpha(),
       pygame.image.load("img/Clouds.png").convert_alpha(),
    )
-   universe = Universe(planet_factory,pygame.image.load("img/nebula.jpg").convert())
+   universe = Universe(
+      planet_factory,
+      pygame.image.load("img/nebula.jpg").convert(),
+      pygame.image.load("img/shadow_outline.png").convert_alpha()
+   )
    universe.populate()
    Player(
       universe,pygame.image.load("img/ship58h.png").convert_alpha(),
@@ -218,7 +230,7 @@ if __name__ == "__main__":
       {
          'bounce':pygame.mixer.Sound("sounds/bounce_planet_short.ogg"),
       },
-      (500,300),0,(0.3,0)
+      (0,0),0,(0.0,0)
    )
    pygame.mixer.Sound("sounds/space_ambient.ogg").play(loops=-1,fade_ms=1000)
    engine_sound = pygame.mixer.Sound("sounds/sfx_engine_loop.ogg")
