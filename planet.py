@@ -106,8 +106,8 @@ class Atmosphere(object):
       self.mult_canvas = pygame.Surface(atmosphere.get_size(),SRCALPHA,32)
    def stamp(self,surface,sealevel,templevel):
       color = self.colormap[
-         min(self.colormap.shape[0]-1,max(0,int((sealevel/2+0.5)*self.colormap.shape[0]))),
-         min(self.colormap.shape[0]-1,max(0,int((templevel/2+0.5)*self.colormap.shape[1])))
+         min(self.colormap.shape[0]-1,max(0,int((templevel/2+0.5)*self.colormap.shape[0]))),
+         min(self.colormap.shape[0]-1,max(0,int((sealevel/2+0.5)*self.colormap.shape[1])))
       ]
       self.mult_canvas.fill(color)
       center_pos = (surface.get_width()//2-self.atmosphere.get_width()//2,surface.get_height()//2-self.atmosphere.get_height()//2)
