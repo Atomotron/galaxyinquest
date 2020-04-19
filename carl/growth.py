@@ -17,10 +17,10 @@ C_dot = b1*P + b2*S
 S_dot = c1*C + c2*T
 T_dot = d1*C + d2*S
 
-population = P = po + P_dot
-tech = C = co + C_dot
-sea_level = S = co + S_dot
-Temp = T = to + T_dot
+population = P = po +
+tech = C = co +
+sea_level = S = co +
+Temp = T = to +
 
 [a1,a2,a3] = [r*x1,o*x2,o*x3]
 [b1,b2] = [r*x4,o*x5]
