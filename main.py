@@ -113,8 +113,9 @@ class Player(object):
          if r_mag < self.RADIUS+gravitator.radius:
             r_hat = r/r_mag
             v_dot_r_hat = np.sum(self.vel*r_hat)
-            self.sounds['bounce'].set_volume(v_dot_r_hat*self.BOUNCE_VOLUME) # Quiet sound for tiny bounce
-            self.sounds['bounce'].play()
+            if v_dot_r_hat > 0.1:
+               self.sounds['bounce'].set_volume(v_dot_r_hat*self.BOUNCE_VOLUME) # Quiet sound for tiny bounce
+               self.sounds['bounce'].play()
             v_proj_r_hat = v_dot_r_hat*r_hat # project velocity on to radial vector
             self.vel -= (2-self.BOUNCE_DAMP)*v_proj_r_hat # elastic colission
             self.pos = gravitator.pos - r_hat*(self.RADIUS+gravitator.radius) # put us back on the surface
