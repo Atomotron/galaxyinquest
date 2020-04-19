@@ -31,7 +31,6 @@ class BiomeMap(object):
       np.bitwise_and(output,0xff,out=output)
       np.floor_divide(output,256//ColorMap.SHEET_SIZE,out=output)
       return output
-      #np.bitwise_and(np.right_shift(subsurface,shifts[0]),0xff)
    def dynamic_range(self,x):
       """Scale and clamp a floating point value between -1.0 and 1.0 to be between -SHEET_SIZE and SHEET_SIZE"""
       return min(ColorMap.SHEET_SIZE,max(-ColorMap.SHEET_SIZE, #clamp
@@ -40,7 +39,7 @@ class BiomeMap(object):
    def stamp(self,sealevel,templevel,colormap,surface):
       """Writes the planet sprite onto the given surface. Sealevel and templevel have dynamic range from -1.0 to 1.0"""
       sealevel = self.dynamic_range(sealevel)
-      templevel = self.dynamic_range(templevel)
+      templevel = self.dynamic_range(-templevel) # invert templevel
       data = surfarray.pixels2d(surface)
       np.copyto(data,self.alpha) # A clean slate
       # Temperature
