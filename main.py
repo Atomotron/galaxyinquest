@@ -5,6 +5,7 @@ import numpy as np
 
 from util import vfloor,vfloat
 import planet
+import widgets
 from models import PlanetModel
 
 class Planet(object):
@@ -75,13 +76,17 @@ class Player(object):
          r_mag_raised_to_three = np.power(np.sum(np.square(r)),3/2)
          g += self.G*gravitator.mass*r / r_mag_raised_to_three
       return g
-  
+   
+   @property
+   def thrusting(self):
+      return pygame.mouse.get_pressed()[0]
+   
    def thrust(self):
       '''Computes how much we should be thrusting based on our controls.'''
       return (np.array((
          self.THRUST*np.cos(self.angle),
          self.THRUST*np.sin(self.angle),
-      )) if pygame.mouse.get_pressed()[0] else np.array((0.0,0.0)))
+      )) if self.thrusting else np.array((0.0,0.0)))
       
    def collide(self):
       '''Check if we're inside a planet, and get us out if we are.'''
@@ -262,10 +267,12 @@ if __name__ == "__main__":
       (0,0),0,(0.0,0)
    )
    pygame.mixer.Sound("sounds/space_ambient.ogg").play(loops=-1,fade_ms=1000)
-   engine_sound = pygame.mixer.Sound("sounds/sfx_engine_loop.ogg")
-   engine_start_sound = pygame.mixer.Sound("sounds/sfx_engine_initial.ogg")
-   engine_stop_sound = pygame.mixer.Sound("sounds/sfx_engine_off.ogg")
-
+   sounds = {
+      'engine' :  pygame.mixer.Sound("sounds/sfx_engine_loop.ogg"),
+      'engine_start' :  pygame.mixer.Sound("sounds/sfx_engine_initial.ogg"),
+      'engine_stop'  :  pygame.mixer.Sound("sounds/sfx_engine_off.ogg"),
+   }
+   ui = widgets.UI(universe,sounds)    
    while True:
         dt = clock.tick(60)  # If we go faster than 60fps, stop and wait.
         for event in pygame.event.get():  # Get everything that's happening
@@ -275,11 +282,7 @@ if __name__ == "__main__":
             elif event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 exit()
-            elif event.type == MOUSEBUTTONDOWN and event.button == 1:
-               engine_sound.play(loops=-1,fade_ms=100)
-               engine_start_sound.play()
-            elif event.type == MOUSEBUTTONUP and event.button == 1:
-               engine_sound.fadeout(100)
-               engine_stop_sound.play()
+            elif event.type == MOUSEBUTTONDOWN or event.type == MOUSEBUTTONUP:
+               ui.handle_event(event)
         universe.tick(dt)
         pygame.display.update(universe.draw(screen)) # Only push out the stuff we changed to the OS
