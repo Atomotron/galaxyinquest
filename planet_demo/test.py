@@ -130,8 +130,7 @@ class Player(object):
     
     def isKillingThrusting(self):
         return self.killThrust
-        
-        
+
     def move2(self,dt):
         
         dt = dt/14
@@ -311,13 +310,13 @@ if __name__ == "__main__":
 
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
     mainSoundChannel = pygame.mixer.Channel(0)
-    #mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
+    mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
     
     thrustSounds = pygame.mixer.Channel(1)
     loopedThrust = pygame.mixer.Sound("../sounds/sfx_engine_loop.ogg")
     initThrust = pygame.mixer.Sound("../sounds/sfx_engine_initial.ogg")
     killThrust = pygame.mixer.Sound("../sounds/sfx_engine_off.ogg")
-    
+
     
 
     clock = pygame.time.Clock()  # A clock to keep track of time
@@ -349,16 +348,16 @@ if __name__ == "__main__":
             elif event.type == KEYDOWN and event.key == K_ESCAPE:
                 pygame.quit()
                 exit()
+            if event.type == pygame.MOUSEBUTTONUP:
+                thrustSounds.stop()
+                thrustSounds.queue(killThrust)
 
 
 
         if(player.isThrusting()):
             thrustSounds.queue(initThrust)
             thrustSounds.queue(loopedThrust)
-                
-        elif(player.isKillingThrusting()):
-            thrustSounds.queue(killThrust)
-            thrustSounds.stop()
+
 
 
 
