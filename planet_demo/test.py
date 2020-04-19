@@ -87,6 +87,7 @@ class Player(object):
         self.planetList = planetList
         self.angularmom = 0
         self.thrust = False
+        self.killThrust= False
         
         
     def draw(self):
@@ -126,25 +127,31 @@ class Player(object):
         
     def isThrusting(self):
         return self.thrust
+    
+    def isKillingThrusting(self):
+        return self.killThrust
         
         
     def move2(self,dt):
         
         dt = dt/14
         pressed = pygame.mouse.get_pressed()
+        released = pygame.mouse.get_release()
         
-        
-        thrust= False
-        
+        self.thrust = False
+        self.killThrust= False
 
         if pressed[0]:  
             
             self.thrust = True
+            self.killThrust = False
             self.velocity[1] -= 0.1 * np.cos(self.rotation * 3.14 / 180) *dt
             self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180) *dt
             
-        else:
+        if released[0]:
             self.thrust = False
+            self.killThrust = True
+
             
         if (self.velocity[0] <= (-1 * self.MaxVelocity)):
             self.velocity[0] = (-1 * self.MaxVelocity)
@@ -234,6 +241,7 @@ class Player(object):
                 self.velocity[1] -=2*V2y
         return collided
     def update(self,dt):
+        
         pressed = pygame.key.get_pressed()
         collided = self.collide()
         self.draw()
@@ -303,11 +311,12 @@ if __name__ == "__main__":
 
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
     mainSoundChannel = pygame.mixer.Channel(0)
-    mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
+    #mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
     
     thrustSounds = pygame.mixer.Channel(1)
     loopedThrust = pygame.mixer.Sound("../sounds/sfx_engine_loop.ogg")
     initThrust = pygame.mixer.Sound("../sounds/sfx_engine_initial.ogg")
+    killThrust = pygame.mixer.Sound("../sounds/sfx_engine_off.ogg")
     
     
 
@@ -346,8 +355,11 @@ if __name__ == "__main__":
         if(player.isThrusting()):
             thrustSounds.queue(initThrust)
             thrustSounds.queue(loopedThrust)
-        else:
+                
+        elif(player.isKillingThrusting()):
+            thrustSounds.queue(killThrust)
             thrustSounds.stop()
+
 
 
 
