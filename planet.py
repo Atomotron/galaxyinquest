@@ -13,6 +13,7 @@ class ColorMap(object):
       self.colors = np.bitwise_and(surfarray.array2d(sheet.subsurface(rect)),get_rid_of_alpha)
 
 class BiomeMap(object):
+   SHEET_SIZE = 160
    def __init__(self,sheet,rect):
       subsurface = sheet.subsurface(rect)
       data = surfarray.array2d(subsurface)
@@ -101,7 +102,11 @@ class Cityscape(object):
 
 class PlanetSprite(object):
    CANVAS_SIZE = (256,256)
-   def __init__(self,pos,biomemap,colormap,city_spritesheet,shadow,scale=1,omega=0.005,theta=0):
+   def __init__(self,universe,pos,biomemap,colormap,city_spritesheet,shadow,scale=1,omega=0.005,theta=0):
+      self.universe = universe
+      if universe:
+         universe.things.append(self)
+         universe.sprites.append(self)
       self.pos = pos
       self.theta = theta
       self.omega = omega
@@ -131,19 +136,43 @@ class PlanetSprite(object):
    def draw(self,surface):
       day = pygame.transform.rotozoom(self.day_canvas,self.theta,self.scale)
       night = pygame.transform.rotozoom(self.night_canvas,self.theta,self.scale)
-      surface.blit(
+      r = surface.blit(
          day,
          (self.pos[0],self.pos[1] - night.get_height()//2),
          pygame.Rect(day.get_width()//2,0,day.get_width()//2,day.get_height()) 
       )
-      surface.blit(
+      r = r.union(surface.blit(
          night,
          (self.pos[0] - night.get_width()//2,self.pos[1] - night.get_height()//2),
          pygame.Rect(0,0,day.get_width()//2,day.get_height()) 
-      )
-      surface.blit(
+      ))
+      return r.union(surface.blit(
          self.shadow,
          (self.pos[0] - self.shadow.get_width()//2,self.pos[1] - self.shadow.get_height()//2)
+      ))
+
+class PlanetSpriteFactory(object):
+   def __init__(self,color_sheet,biomes_sheet,city_spritesheet,shadow):
+      self.biome_maps = [
+         BiomeMap(biomes_sheet,pygame.Rect(i*BiomeMap.SHEET_SIZE,0,BiomeMap.SHEET_SIZE,BiomeMap.SHEET_SIZE))
+         for i in range(0,biomes_sheet.get_width()//BiomeMap.SHEET_SIZE)
+      ]
+      self.color_maps = [
+         ColorMap(color_sheet,pygame.Rect(i*ColorMap.SHEET_SIZE,0,ColorMap.SHEET_SIZE,ColorMap.SHEET_SIZE))
+         for i in range(0,color_sheet.get_width()//ColorMap.SHEET_SIZE)
+      ]
+      self.city_spritesheet = city_spritesheet
+      self.shadow = shadow
+   def make_planet(self,universe,pos,bindex=None,cindex=None):
+      bindex = bindex or np.random.randint(0,len(self.biome_maps))
+      cindex = cindex or np.random.randint(0,len(self.color_maps))
+      return PlanetSprite(
+         universe,
+         pos,
+         self.biome_maps[bindex%len(self.biome_maps)],
+         self.colormap[cindex%len(self.color_maps)],
+         self.city_spritesheet,
+         self.shadow
       )
 
 if __name__ == "__main__":
@@ -157,7 +186,7 @@ if __name__ == "__main__":
       city = pygame.image.load("img/cityscapes.png").convert_alpha()
       cmap = ColorMap(color_sheet,pygame.Rect(cindex*ColorMap.SHEET_SIZE,0,ColorMap.SHEET_SIZE,ColorMap.SHEET_SIZE))
       bmap = BiomeMap(biomes_sheet,pygame.Rect(bindex*160,0,160,160))
-      psprite = PlanetSprite((128,128),bmap,cmap,city,shadow)
+      psprite = PlanetSprite(None,(128,128),bmap,cmap,city,shadow)
       return psprite
    psprite = load("img/terrain.png","img/planet.png",0,1)
    cindex = 0
