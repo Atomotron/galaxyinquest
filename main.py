@@ -164,7 +164,6 @@ class Universe(object):
       self.camera_targets = [] # Things that the camera should try to display  
       self.dirty_rects = [background.get_rect()] # patches of the background that will need to be redrawn
       self.player = None
-      self.planets = []
       self.shadow = shadow
       self.scaled_shadow = shadow
       self.zoom = 1
