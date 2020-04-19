@@ -73,20 +73,22 @@ class World(object):
 class Player(object):
     # So pos,vel, and acc ALL have 0 and 1 , e.g: pos[0] is X coordinates, so on.
     def __init__(self, sprite, screen, pos, velocity, acc, planetList):
-        #self.sprite = pygame.transform.rotate(sprite, -90)
-        self.sprite = pygame.transform.rotozoom(sprite, -90, 0.3)
+        self.sprite = pygame.transform.rotate(sprite, -90)
         self.pos = pos
         self.velocity = velocity
         self.acc = acc
         self.screen = screen
-        self.MaxVelocity = 1.5
+        self.MaxVelocity = 5
         self.rotation = 0
-        self.sprite2 = pygame.transform.rotozoom(sprite, -90, 0.3)
+        self.sprite2 = pygame.transform.rotate(sprite, -90)
         self.mass = 1
         self.centerPos = (
         self.pos[0] - self.sprite.get_rect().width // 2, self.pos[1] - self.sprite.get_rect().height // 2)
         self.planetList = planetList
         self.angularmom = 0
+        self.thrust = False
+        
+        
     def draw(self):
         screen.blit(self.sprite, (self.centerPos[0], self.centerPos[1]))
 
@@ -119,12 +121,31 @@ class Player(object):
         self.pos[1] += self.velocity[1] *dt
         self.pos[0] += self.velocity[0] *dt
         self.rotation += self.angularmom * dt
+        
+        
+        
+    def isThrusting(self):
+        return self.thrust
+        
+        
     def move2(self,dt):
+        
         dt = dt/14
         pressed = pygame.mouse.get_pressed()
-        if pressed[0]:
-            self.velocity[1] -= 0.01 * np.cos(self.rotation * 3.14 / 180) *dt
-            self.velocity[0] -= 0.01 * np.sin(self.rotation * 3.14 / 180) *dt
+        
+        
+        thrust= False
+        
+
+        if pressed[0]:  
+            
+            self.thrust = True
+            self.velocity[1] -= 0.1 * np.cos(self.rotation * 3.14 / 180) *dt
+            self.velocity[0] -= 0.1 * np.sin(self.rotation * 3.14 / 180) *dt
+            
+        else:
+            self.thrust = False
+            
         if (self.velocity[0] <= (-1 * self.MaxVelocity)):
             self.velocity[0] = (-1 * self.MaxVelocity)
         if (self.velocity[1] <= (-1 * self.MaxVelocity)):
@@ -276,18 +297,26 @@ class PlanetSpriteLoader(object):
         psprite.draw(screen)
         
 
+   
+        
 if __name__ == "__main__":
 
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
+    mainSoundChannel = pygame.mixer.Channel(0)
+    mainSoundChannel.play(pygame.mixer.Sound("../sounds/space_ambient.ogg"),loops=-1)
     
-    gameLoopSound = pygame.mixer.Sound("../sounds/space_ambient.ogg").play()
+    thrustSounds = pygame.mixer.Channel(1)
+    loopedThrust = pygame.mixer.Sound("../sounds/sfx_engine_loop.ogg")
+    initThrust = pygame.mixer.Sound("../sounds/sfx_engine_initial.ogg")
+    
+    
 
     clock = pygame.time.Clock()  # A clock to keep track of time
     world = World(background, screen.get_rect())
-    planet = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 80, 60, (screenWidth / 2, screenHeight / 2))
-    planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 80, 60, (500, 20))
+    planet = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 600, (screenWidth / 2, screenHeight / 2))
+    #planet2 = Planet(planetSprite.subsurface(pygame.Rect((0, 0), (190, 194))), 100, 600, (500, 20))
     player = Player(spritesheet.subsurface(source_rects["jet"]), screen, [(screenWidth / 2) - 25, screenHeight / 2],
-                    [(0), (0)], [0, 0], [planet,planet2])
+                    [(0), (0)], [0, 0], [planet])
 
 
 
@@ -312,12 +341,23 @@ if __name__ == "__main__":
                 pygame.quit()
                 exit()
 
+
+
+        if(player.isThrusting()):
+            thrustSounds.queue(initThrust)
+            thrustSounds.queue(loopedThrust)
+        else:
+            thrustSounds.stop()
+
+
+
+
         world.draw(screen)
         
         planetSpriteLoader.update(psprite,dt)
         
         planet.update()
-        planet2.update()
+        #planet2.update()
         player.update(dt)
         
         
