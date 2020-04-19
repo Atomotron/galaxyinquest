@@ -39,8 +39,6 @@ class PlanetModel(object):
          self.staleness = 0
          self.planet_sprite.update()
       self.staleness += dt
-      
-      
 
 class Gravitator(object):
    def __init__(self,universe,pos,mass,radius):
@@ -61,10 +59,10 @@ class Gravitator(object):
       ) # return impacted pixels
 
 class Player(object):
-   RADIUS = 16 # radius for physics purposes
+   RADIUS = 24 # radius for physics purposes
    G = 1 # The strength of the force of gravity
    THRUST = 0.001
-   BOUNCE_DAMP = 0.1
+   BOUNCE_DAMP = 0.4
    ABUSALEHBREAKS = 0.005 # I will put this in properly tomorrow
    BOUNCE_VOLUME = 0.5
    def __init__(self,universe,spritesheet,rects,sounds,pos,angle=0,vel=(0,0)):
