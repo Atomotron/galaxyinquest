@@ -273,30 +273,8 @@ class PlanetSpriteLoader(object):
         psprite.tick(dt)
         psprite.set_parameters(self.sealevel,self.templevel,self.population,self.tech) 
         psprite.draw(screen)
-<<<<<<< HEAD
-=======
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-class Sound():
-    
-    def __init__(self):
-        gameLoopSound = pygame.Sound.Load("../sounds/space_ambient.ogg")
-        
-   
->>>>>>> 31b442b15a20aa602b40980962e12ed515f5c282
 
-
+        
 if __name__ == "__main__":
 
     planetSprite = pygame.image.load("../img/planetTest.png").convert_alpha()
