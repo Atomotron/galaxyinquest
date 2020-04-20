@@ -41,5 +41,4 @@ class Effect(object):
       rect = self.frames[self.frame]
       pos = vfloor(camera.cam(self.pos - vfloat(rect.size)/2))
       scaled_sprite = pygame.transform.rotozoom(self.sheet.subsurface(rect),0,camera.zoom)
-      pygame.draw.circle(surface,(255,255,0),vfloor(camera.cam(self.pos)),3)
       return surface.blit(scaled_sprite,pos)
