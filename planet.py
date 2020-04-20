@@ -122,12 +122,13 @@ class Cityscape(object):
          self.stamp_building(surface,theta,index,day,tech_index)
 
 class Atmosphere(object):
-   def __init__(self,colormap,atmosphere):
+   def __init__(self,colormap,atmosphere,enlightened_atmosphere):
       self.colormap = surfarray.array3d(colormap)
       self.atmosphere = atmosphere
+      self.enlightened_atmosphere = enlightened_atmosphere
       self.mult_canvas = pygame.Surface(atmosphere.get_size(),SRCALPHA,32)
       self.canvas = pygame.Surface(atmosphere.get_size(),SRCALPHA,32)
-   def draw_at(self,surface,pos,scale,sealevel,templevel):
+   def draw_at(self,surface,pos,scale,sealevel,templevel,tech):
       color = self.colormap[
          min(self.colormap.shape[0]-1,max(0,int((templevel/2+0.5)*self.colormap.shape[0]))),
          min(self.colormap.shape[0]-1,max(0,int((sealevel/2+0.5)*self.colormap.shape[1])))
@@ -136,6 +137,8 @@ class Atmosphere(object):
       self.canvas.fill((0,0,0,0))
       self.canvas.blit(self.atmosphere,(0,0))
       self.canvas.blit(self.mult_canvas,(0,0),special_flags=BLEND_RGBA_MULT)
+      if tech >= 1.0:
+         self.canvas.blit(self.enligtened_atmosphere,(0,0))
       scaled = pygame.transform.rotozoom(self.canvas,0,scale)
       center_pos = (pos[0]-scaled.get_width()//2,pos[1]-scaled.get_height()//2)
       return surface.blit(scaled,center_pos)
@@ -190,7 +193,7 @@ class PlanetSprite(object):
       day = pygame.transform.rotozoom(self.day_canvas,angle,scale)
       night = pygame.transform.rotozoom(self.night_canvas,angle,scale)
       clouds = pygame.transform.rotozoom(self.clouds,self.cloud_theta*180/np.pi,scale)
-      r = self.atmosphere.draw_at(surface,pos,scale,self.parameters[0],self.parameters[1])
+      r = self.atmosphere.draw_at(surface,pos,scale,self.parameters[0],self.parameters[1],self.parameters[2])
       r = r.union(surface.blit(
          clouds,
          (pos[0] - clouds.get_width()//2,pos[1] - clouds.get_height()//2)
@@ -221,7 +224,7 @@ class PlanetSpriteFactory(object):
          for i in range(0,res.image['colormaps'].get_width()//ColorMap.SHEET_SIZE)
       ]
       self.city_spritesheet = res.image['cityscapes']
-      self.atmosphere = Atmosphere(res.image['atmosphere_colormap'],res.image['atmosphere'])
+      self.atmosphere = Atmosphere(res.image['atmosphere_colormap'],res.image['atmosphere'],res.image['enlightened_atmosphere'])
       self.clouds = res.image['clouds']
    def make_planet(self,universe,pos,bindex=None,cindex=None):
       bindex = bindex or np.random.randint(1,len(self.biome_maps)) # start at 1 because 0 is my thing
