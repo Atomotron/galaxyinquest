@@ -290,7 +290,7 @@ class Universe(object):
          Rect(0,20*7,20,20),
          Rect(0,20*8,20,20),
       ],
-      'g':[Rect(40*x,20*y,40,20) for x,y in zip(range(0,10),range(0,3))],
+      'g':[Rect(40*x,20*y+60,40,20) for x,y in zip(range(0,10),range(0,3))],
       'b':[
          Rect(0,0,20,20),
          Rect(0,20,20,20),
