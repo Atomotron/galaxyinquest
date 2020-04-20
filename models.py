@@ -1,15 +1,9 @@
 #!/usr/bin/env python
 import numpy as np
+import random
 
 class Model(object):
    DEFAULT_SPEED = 0.001 # dt multiplier
-   EVENT_DELTA = { # dsea,dtemp,dpop,dtech
-      'world_war' : (
-      'war'       : [Rect(160*i,160,160,160) for i in range(0,7)],
-      'plauge'    : [Rect(160*i,160*2,160,160) for i in range(0,7)],
-      'monsoon'   : [Rect(160*i,160*3,160,160) for i in range(0,7)],
-      'sandstorm'   : [Rect(160*i,160*4,160,160) for i in range(0,7)],
-   }   
    def __init__(self,sea=0.0,temp=0.0,pop=0.0,tech=0.0,speed=1):
       self.sea = sea
       self.temp = temp
@@ -24,16 +18,13 @@ class Model(object):
    
    def start_event(self,name):
       '''Called by the model when we would like to trigger an event.'''
+      print("Starting event",name)
       self.event_warnings.append(name)
    
    def execute_event(self,name):
       '''Called by the game engine some time after start_event, when it is time
          for the event to actually happen.'''
-      dsea,dtemp,dpop,dtech = self.EVENT_DELTA[name]
-      self.sea = self.sea+dsea
-      self.temp = self.temp+dtemp
-      self.pop = np.clip(self.pop+dpop,0,1)
-      self.tech = np.clip(self.tech+dtech,0,1)
+      pass
 
 class SineModel(Model):
    SEA_SPEED = 0.1
@@ -45,6 +36,15 @@ class SineModel(Model):
    GOOD_TEMP_ZONE = 0.3
    GOOD_SEA_ZONE = 0.3
    GOOD_POP_ZONE = 0.25 # width around 0.5 pop for tech growth
+   
+   EVENT_DELTA = { # dsea,dtemp,pop factor,dtech
+      'world_war' : (0.0,0.3,0.05,0.0),
+      'war'       : (0.0,0.2,0.5,0.0),
+      'plauge'    : (0.0,0.0,1,0.0),
+      'monsoon'   : (0.3,-0.3,1,0.0),
+      'sandstorm'   : (-0.3,0.3,1,0.0),
+   }
+   EVENT_PERIOD = 10
    def __init__(self):
       # Choose random starting values
       super().__init__(
@@ -52,9 +52,16 @@ class SineModel(Model):
          temp=np.random.uniform(-self.GOOD_TEMP_ZONE,self.GOOD_TEMP_ZONE),
          pop=0.1,tech=0.0
       )
+      self.event_timer = 0
 
    def tick(self,dt):
       ds = self.speed * dt
+      # Maybe start an event
+      if self.event_timer > self.EVENT_PERIOD:
+         self.event_timer = 0
+         self.start_event(random.choice(list(self.EVENT_DELTA)))
+      self.event_timer += ds
+      # Handle behavior
       if not self.enlightened:
          self.temp += -self.sea*ds*self.TEMP_SPEED
          self.sea += self.temp*ds*self.SEA_SPEED
@@ -74,6 +81,13 @@ class SineModel(Model):
          self.enlightened = True
       self.pop = np.clip(self.pop, 0, 1)
       self.tech = np.clip(self.tech, 0, 1)
+      
+   def execute_event(self,name):
+      dsea,dtemp,dpop,dtech = self.EVENT_DELTA[name]
+      self.sea = self.sea+dsea
+      self.temp = self.temp+dtemp
+      self.pop = np.clip(self.pop*dpop,0,1)
+      self.tech = np.clip(self.tech+dtech,0,1)
 
 class StochasticModel(Model):
    SPEED = 0.002 # average change to parameters each milisecond
