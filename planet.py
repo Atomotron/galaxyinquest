@@ -198,7 +198,7 @@ class PlanetSprite(object):
       day = pygame.transform.rotozoom(self.day_canvas,angle,scale)
       night = pygame.transform.rotozoom(self.night_canvas,angle,scale)
       clouds = pygame.transform.rotozoom(self.clouds,self.cloud_theta*180/np.pi,scale)
-      r = self.atmosphere.draw_at(surface,pos,scale,self.parameters[0],self.parameters[1],self.parameters[2])
+      r = self.atmosphere.draw_at(surface,pos,scale,self.parameters[0],self.parameters[1],self.parameters[3])
       r = r.union(surface.blit(
          clouds,
          (pos[0] - clouds.get_width()//2,pos[1] - clouds.get_height()//2)
