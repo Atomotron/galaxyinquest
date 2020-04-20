@@ -75,6 +75,9 @@ if __name__ == "__main__":
     TempTechModifier = 0
     TempSeaModifier = 0
     SeaTempModifier = 0
+    
+    optTemp = True
+    optSea = True
 
     
     
@@ -92,17 +95,32 @@ if __name__ == "__main__":
          
         
         if(temp > 0.65 or temp < 0.35):
+            
             dPop = -dPop
+            optTemp = False
+        else:
+            optTemp= True
       
         
         if(sea > 0.65):
             popBar.maxPop = 1-((sea - 0.65) * 2)
             dTemp -= (sea-0.5) * 0.0000001
+            optSea = False
+            
         elif(sea < 0.35):
             
             popBar.maxPop = 1-((0.35 - sea) * 2)
             dTemp += (sea-0.5) * 0.0000001
+            optSea = False
+        else: 
+            optSea = True
         
+        
+        
+        if( optSea and optTemp):
+            dTech = 0.00001
+        else:
+            dTech = 0
         
         clock.tick(60) 
         for event in pygame.event.get(): 
