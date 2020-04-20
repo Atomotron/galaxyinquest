@@ -3,6 +3,7 @@ import pygame
 import random
 from sys import exit
 from pygame.locals import *
+from Bars import Bar
 
 class Resources(object):
    def __init__(self,screen,images,sounds,fonts):
@@ -16,6 +17,8 @@ class Resources(object):
       to_load = [(name,sounds[name],'sound') for name in sounds]
       to_load += [(name,images[name],'image') for name in images]
       to_load += [(name,fonts[name],'font') for name in fonts]
+      barTest = Bar(screen,(300,250),(0),(218,165,32))
+      load = pygame.image.load("img/testbackground.png")
       
       # Skully: use pygame to load loading screen image assets here.
       # loading_screen = pygame.image.load(...)
@@ -32,9 +35,13 @@ class Resources(object):
          # progress ranges from 0.0 to slightly less than 1.0
          # we never want to show a full loading bar because when it's full, we move on and quit loading!
          progress = i / (len(to_load))
-         color = (random.randint(0,255),int(progress*255),random.randint(0,255))
-         print(color)
-         screen.fill(color)
+         #color = (random.randint(0,255),int(progress*255),random.randint(0,255))
+         screen.fill((0,0,0))
+         print(progress)
+         barTest.update(progress)
+         
+         #print(color)
+         #screen.fill(color)
          pygame.display.update(screen.get_rect())
          # actually load the resource
          if kind == 'sound':
