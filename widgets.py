@@ -98,12 +98,6 @@ class BarButton(object):
             
 
 class UI(object):
-   CARGO_BUTTONS = [
-      ('red_on','red_off',(0,0))
-   ]
-   BUTTON_RECTS = {
-
-   }
    def __init__(self,universe,sounds,button_sheet=None):
       self.sounds = sounds
       self.universe = universe
