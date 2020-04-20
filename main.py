@@ -356,6 +356,19 @@ class Universe(object):
       bg = self.background
       bg.blit(self.res.image['background_base'],(0,0))
       nebulae = [self.res.image['nebula'+str(i+1)] for i in range(5)]
+      starsheet = self.res.image['stars']
+      def star():
+         s = pygame.transform.rotozoom(
+            starsheet.subsurface(random.choice(self.STAR_RECTS)),
+            random.uniform(0,360),
+            random.uniform(0.5,1),
+         )
+         bg.blit(s,
+            (random.randrange(bg.get_width()),
+             random.randrange(bg.get_height()))
+         )
+      for i in range(0,500):
+         star()
       for i in range(random.randrange(4,6)):
          nebula = pygame.transform.rotozoom(
             random.choice(nebulae),
@@ -366,13 +379,8 @@ class Universe(object):
             (random.randrange(bg.get_width())-nebula.get_width()//2,
              random.randrange(bg.get_height())-nebula.get_height()//2)
          )       
-      starsheet = self.res.image['stars']
-      for i in range(0,1000):
-         bg.blit(starsheet,
-            (random.randrange(bg.get_width()),
-             random.randrange(bg.get_height())),
-            random.choice(self.STAR_RECTS)
-         )
+      for i in range(0,500):
+         star()
    
    def clear(self):
       self.age = 0
