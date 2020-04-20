@@ -329,7 +329,7 @@ class Universe(object):
          Rect(0,40,20,20),
       ],
    }
-   PLANET_SPAWNING_DISTANCE = 300 # Minimum distance between planets
+   PLANET_SPAWNING_DISTANCE = 1000 # Minimum distance between planets
    def __init__(self,res,planet_factory):
       self.res = res
       self.planet_factory = planet_factory
