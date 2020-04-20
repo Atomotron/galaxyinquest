@@ -36,8 +36,8 @@ class SineModel(Model):
     TECH_SPEED = 0.01
 
     # The range of temp and sea values required for pop growth
-    GOOD_TEMP_ZONE = 0.8
-    GOOD_SEA_ZONE = 0.8
+    GOOD_TEMP_ZONE = 0.4
+    GOOD_SEA_ZONE = 0.4
     GOOD_POP_ZONE = 0.25  # width around 0.5 pop for tech growth
 
     EVENT_DELTA = {  # dsea,dtemp,pop factor,dtech
