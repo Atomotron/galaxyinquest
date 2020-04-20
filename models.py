@@ -1,15 +1,70 @@
 #!/usr/bin/env python
 import numpy as np
 
-class PlanetModel(object):
+class Model(object):
+   DEFAULT_SPEED = 0.001 # dt multiplier
+   def __init__(self,sea=0.0,temp=0.0,pop=0.0,tech=0.0,speed=1):
+      self.sea = sea
+      self.temp = temp
+      self.pop = pop
+      self.tech = tech
+      self.speed = speed*self.DEFAULT_SPEED
+      self.enlightened = False
+   def tick(self,dt):
+      pass
+
+class SineModel(Model):
+   SEA_SPEED = 0.1
+   TEMP_SPEED = 0.1
+   POP_SPEED = 0.01
+   TECH_SPEED = 0.01
+   
+   # The range of temp and sea values required for pop growth
+   GOOD_TEMP_ZONE = 0.3
+   GOOD_SEA_ZONE = 0.3
+   GOOD_POP_ZONE = 0.25 # width around 0.5 pop for tech growth
+   def __init__(self):
+      # Choose random starting values
+      super().__init__(
+         sea=np.random.uniform(-self.GOOD_SEA_ZONE,self.GOOD_SEA_ZONE),
+         temp=np.random.uniform(-self.GOOD_TEMP_ZONE,self.GOOD_TEMP_ZONE),
+         pop=0.1,tech=0.0
+      )
+
+   def tick(self,dt):
+      ds = self.speed * dt
+      if not self.enlightened:
+         self.temp += -self.sea*ds*self.TEMP_SPEED
+         self.sea += self.temp*ds*self.SEA_SPEED
+         if -self.GOOD_TEMP_ZONE < self.temp < self.GOOD_TEMP_ZONE and \
+            -self.GOOD_SEA_ZONE < self.sea < self.GOOD_SEA_ZONE:
+            self.pop += self.POP_SPEED*ds
+         else:
+             self.pop -= self.POP_SPEED*ds
+         if 0.5-self.GOOD_POP_ZONE < self.pop < 0.5+self.GOOD_POP_ZONE:
+             self.tech += (1-0.5+self.pop)*ds*self.TECH_SPEED
+         #Yeah this fixes a bug where there's only 1 guy and he keeps rebuilding society lol
+         if self.pop <= 0.001:
+             self.pop = 0
+         if self.pop == 0:
+             self.tech = 0
+      if self.tech >= 1:
+         self.enlightened = True
+      self.temp = np.clip(self.temp,-1,1)
+      self.sea = np.clip(self.sea, -1, 1)
+      self.pop = np.clip(self.pop, 0, 1)
+      self.tech = np.clip(self.tech, 0, 1)
+
+class StochasticModel(Model):
    SPEED = 0.002 # average change to parameters each milisecond
    PULL_TO_CENTER = 0.0002
    def __init__(self):
-      # Choose random starting values
-      self.sea = np.random.uniform(-1.0,1.0)
-      self.temp = np.random.uniform(-1.0,1.0)
-      self.pop = np.random.uniform(0.0,1.0)
-      self.tech = np.random.uniform(0.0,1.0)
+      super().__init__(
+         np.random.uniform(-1.0,1.0),
+         np.random.uniform(-1.0,1.0),
+         np.random.uniform(0.0,1.0),
+         np.random.uniform(0.0,1.0)
+      )
    def random_delta(self,dt,value,off_center):
       step = np.random.uniform(-1.0,1.0)*self.SPEED*dt
       restoration = - self.PULL_TO_CENTER*off_center*dt
@@ -20,3 +75,5 @@ class PlanetModel(object):
       self.temp = np.clip(self.random_delta(dt,self.temp,self.temp), -1,1)
       self.pop = np.clip(self.random_delta(dt,self.pop,self.pop-0.5), 0,1)
       self.tech = np.clip(self.random_delta(dt,self.tech,self.tech-0.5), 0,1)
+
+PlanetModel = SineModel # Select the sine model
