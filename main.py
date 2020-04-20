@@ -329,11 +329,14 @@ class Universe(object):
          Rect(0,40,20,20),
       ],
    }
+   STAR_RECTS = [
+      Rect(20*x,20*y,20,20) for x,y in itertools.product(list(range(0,7)),list(range(0,4)))
+   ]
    PLANET_SPAWNING_DISTANCE = 500 # Minimum distance between planets
    def __init__(self,res,planet_factory):
       self.res = res
       self.planet_factory = planet_factory
-      self.background = res.image['background_base']
+      self.background = res.image['background_base'].copy()
       self.shadow = res.image['shadow_outline']
       self.scaled_shadow = self.shadow
       self.screen_rect = self.background.get_rect() # if wrapping_rect is null, use the background rect
@@ -348,6 +351,28 @@ class Universe(object):
       self.target_camera = np.array((0.0,0.0))
       self.rect_offset = vfloat(self.screen_rect.size)/2 # To move the origin from the top left to the center of the screen
       self.skip_next_tick = False
+   
+   def render_background(self):
+      bg = self.background
+      bg.blit(self.res.image['background_base'],(0,0))
+      nebulae = [self.res.image['nebula'+str(i+1)] for i in range(5)]
+      for i in range(random.randrange(3,7)):
+         nebula = pygame.transform.rotozoom(
+            random.choice(nebulae),
+            random.uniform(0,360),
+            random.uniform(0.5,1),
+         )
+         bg.blit(nebula,
+            (random.randrange(bg.get_width())-nebula.get_width()//2,
+             random.randrange(bg.get_height())-nebula.get_height()//2)
+         )       
+      starsheet = self.res.image['stars']
+      for i in range(0,1000):
+         bg.blit(starsheet,
+            (random.randrange(bg.get_width()),
+             random.randrange(bg.get_height())),
+            random.choice(self.STAR_RECTS)
+         )
    
    def clear(self):
       self.age = 0
@@ -470,6 +495,7 @@ class Universe(object):
       self.compute_target_camera()
       self.zoom = self.target_zoom
       self.camera = self.target_camera
+      self.render_background()
 
 if __name__ == "__main__":
    pygame.mixer.pre_init(44100, -16, 2, 1024)
@@ -488,12 +514,18 @@ if __name__ == "__main__":
          'enlightened_atmosphere' : "img/EnlightenedAtmosphere.png",
          'clouds' : "img/Clouds.png",
          'ui'  : "img/ui.png",
-         'background_base' : "img/nebula.jpg",
+         'background_base' : "img/Backgrounds/canvas.png",
          'shadow_outline' : "img/shadow_outline.png",
          'packages'  :  "img/packages.png",
          'ship'   : "img/ship58h.png",
          'effects'   : "img/eventanimation.png",
          'end'   : "img/tutorial/endgamestate.png",
+         'nebula1' : "img/Backgrounds/nebula1.png",
+         'nebula2' : "img/Backgrounds/nebula2.png",
+         'nebula3' : "img/Backgrounds/nebula3.png",
+         'nebula4' : "img/Backgrounds/nebula4.png",
+         'nebula5' : "img/Backgrounds/nebula5.png",
+         'stars'   : "img/Backgrounds/stars.png",
       },
       sounds = {
          'bounce':"sounds/bounce_planet_short.ogg",
