@@ -11,7 +11,10 @@ from models import PlanetModel
 class Planet(object):
    '''A model of the evolution of a planet. Set to randomly increase and decrease parameters kind of like the stock market.'''
    REFRESH_TIME = 1000/2 # refresh no fewer than 2 times per second
-   TITLE_OFFSET = 130 # The distance above the planet that the title is drawn
+   TITLE_OFFSET = 140 # The distance above the planet that the title is drawn
+   STATUS_OFFSET_BELOW_TITLE = 10
+   ENLIGHTENMENT_STATUS_FULL = Rect(90,0,62,15)
+   ENLIGHTENMENT_STATUS_EMPTY = Rect(90,15,62,15)
    def __init__(self,universe,planet_sprite,pos,mass,radius):
       self.universe = universe
       self.universe.things.append(self) # we want to receive ticks
@@ -26,9 +29,8 @@ class Planet(object):
       self.refresh_time = 0
       self.model = PlanetModel()
       self.name = planet.generate_name()
-      self.title_small = self.universe.fonts[0].render(self.name,True,(255,255,255))
-      self.title_large = self.universe.fonts[1].render(self.name,True,(255,255,255))
-
+      self.title = self.universe.fonts[1].render(self.name,True,(255,255,255))
+      
    def tick(self,dt):
       self.model.tick(dt)
       # Update the sprite if we have gone too long without doing so
@@ -40,9 +42,25 @@ class Planet(object):
       self.staleness += dt
 
    def draw(self,screen,camera):
-      title_pos = vfloor(camera.cam(self.pos-np.array((0.0,self.TITLE_OFFSET))))
-      title_pos = (title_pos[0]-self.title_small.get_width()//2,title_pos[1]-self.title_small.get_height()//2)
-      return screen.blit(self.title_small,title_pos)
+      pos = vfloor(camera.cam(self.pos-np.array((0.0,self.TITLE_OFFSET))))
+      title_pos = (pos[0]-self.title.get_width()//2,pos[1]-self.title.get_height()//2)
+      r = screen.blit(self.title,title_pos)
+      status_pos = (pos[0]-self.ENLIGHTENMENT_STATUS_FULL.width//2,pos[1]+self.STATUS_OFFSET_BELOW_TITLE)
+      cut = int(self.model.tech*self.ENLIGHTENMENT_STATUS_FULL.width)
+      screen.blit(
+         self.universe.ui_sheet,
+         status_pos,
+         Rect(self.ENLIGHTENMENT_STATUS_FULL.topleft,(cut,self.ENLIGHTENMENT_STATUS_FULL.height)),
+      )
+      screen.blit(
+         self.universe.ui_sheet,
+         (status_pos[0]+cut,status_pos[1]),
+         Rect(
+            (self.ENLIGHTENMENT_STATUS_EMPTY.left+cut,self.ENLIGHTENMENT_STATUS_EMPTY.top),
+            (self.ENLIGHTENMENT_STATUS_FULL.width-cut,self.ENLIGHTENMENT_STATUS_FULL.height)
+         ),
+      )
+      return r.union(self.ENLIGHTENMENT_STATUS_FULL.move(status_pos))
 
 class Player(object):
    RADIUS = 32 # radius for physics purposes
@@ -187,7 +205,7 @@ class Player(object):
 class Universe(object):
    CAMERA_SPEED = 0.01 # The rate at which the camera approaches the target values
    MARGIN = 100
-   def __init__(self,planet_factory,background,shadow,fonts):
+   def __init__(self,planet_factory,background,shadow,fonts,ui_sheet):
       self.planet_factory = planet_factory
       self.background = background
       self.wrapping_rect = background.get_rect() # if wrapping_rect is null, use the background rect
@@ -199,6 +217,7 @@ class Universe(object):
       self.player = None
       self.shadow = shadow
       self.scaled_shadow = shadow
+      self.ui_sheet = ui_sheet
       self.zoom = 1
       self.camera = np.array((0.0,0.0))
       self.camera_urgency = 1
@@ -282,13 +301,15 @@ if __name__ == "__main__":
       pygame.image.load("img/AtmosphereWhite.png").convert_alpha(),
       pygame.image.load("img/Clouds.png").convert_alpha(),
    )
-   font = pygame.font.Font("fonts/monodb_.ttf",24)
-   font_big = pygame.font.Font("fonts/monodb_.ttf",48)
+   ui_sheet = pygame.image.load("img/ui.png").convert_alpha()
+   font = pygame.font.Font("fonts/monodb_.ttf",16)
+   font_big = pygame.font.Font("fonts/monodb_.ttf",24)
    universe = Universe(
       planet_factory,
       pygame.image.load("img/nebula.jpg").convert(),
       pygame.image.load("img/shadow_outline.png").convert_alpha(),
       (font,font_big),
+      ui_sheet
    )
    universe.populate()
    Player(
@@ -317,9 +338,9 @@ if __name__ == "__main__":
       'song1'  :  pygame.mixer.Sound("sounds/song1.ogg"),
       'song2'  :  pygame.mixer.Sound("sounds/song2.ogg"),
    }
-   ui = widgets.UI(universe,sounds,pygame.image.load("img/ui.png").convert_alpha())    
+   ui = widgets.UI(universe,sounds,ui_sheet)    
    while True:
-        dt = clock.tick(60)  # If we go faster than 60fps, stop and wait.
+        dt = clock.tick(30)  # If we go faster than 60fps, stop and wait.
         for event in pygame.event.get():  # Get everything that's happening
             if event.type == QUIT:  # If someone presses the X button
                 pygame.quit()  # Shuts down the window
