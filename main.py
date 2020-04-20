@@ -8,6 +8,7 @@ from util import vfloor,vfloat
 import planet
 import widgets
 from models import PlanetModel
+from effect import Effect
 import itertools
 import resources
 class Planet(object):
@@ -318,7 +319,8 @@ class Universe(object):
       self.sprites = [] # things that need to have draw(screen) called on them
       self.things = [] # things that need to have tick(dt) called on them
       self.gravitators = [] # things that create gravitational fields    
-      self.camera_targets = [] # Things that the camera should try to display  
+      self.camera_targets = [] # Things that the camera should try to display
+      self.effects = set()
       self.dirty_rects = [self.background.get_rect()] # patches of the background that will need to be redrawn
       self.player = None
       self.ui_sheet = res.image['ui']
@@ -351,10 +353,11 @@ class Universe(object):
          if rect: # If the draw function has created a dirty rect
             self.dirty_rects.append(rect)
             touched_rects.append(rect)
+      more_dirty = [effect.draw(screen,self) for effect in self.effects]
       if self.ui:
-         more_dirty = self.ui.draw(screen,self)
-         self.dirty_rects += more_dirty
-         touched_rects += more_dirty
+         more_dirty += self.ui.draw(screen,self)
+      self.dirty_rects += more_dirty
+      touched_rects += more_dirty
       return touched_rects
    
    def tick(self,dt):
@@ -380,6 +383,8 @@ class Universe(object):
       self.zoom += (self.target_zoom-self.zoom)*self.CAMERA_SPEED*dt*self.camera_urgency
       for thing in self.things:
          thing.tick(dt)
+      for effect in self.effects:
+         effect.tick(dt)
       if self.ui: # Tick UI last
          self.ui.tick(dt)
          
