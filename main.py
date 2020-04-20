@@ -526,6 +526,7 @@ if __name__ == "__main__":
          'nebula4' : "img/Backgrounds/nebula4.png",
          'nebula5' : "img/Backgrounds/nebula5.png",
          'stars'   : "img/Backgrounds/stars.png",
+         'clouds_night'   : "img/CloudsNight.png",
       },
       sounds = {
          'bounce':"sounds/bounce_planet_short.ogg",

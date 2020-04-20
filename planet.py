@@ -146,7 +146,7 @@ class Atmosphere(object):
 class PlanetSprite(object):
    CANVAS_SIZE = (256,256)
    ROTATION_SPEED = 0.0002
-   def __init__(self,universe,pos,biomemap,colormap,city_spritesheet,atmosphere,clouds):
+   def __init__(self,universe,pos,biomemap,colormap,city_spritesheet,atmosphere,clouds,clouds_night):
       self.universe = universe
       if universe:
          universe.things.append(self)
@@ -162,6 +162,7 @@ class PlanetSprite(object):
       self.cityscape = Cityscape(city_spritesheet)
       self.atmosphere = atmosphere
       self.clouds = clouds
+      self.clouds_night = clouds_night
       self.day_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.night_canvas = pygame.Surface(self.CANVAS_SIZE,SRCALPHA,32)
       self.planet_sprite = biomemap.make_surface()
@@ -198,10 +199,17 @@ class PlanetSprite(object):
       day = pygame.transform.rotozoom(self.day_canvas,angle,scale)
       night = pygame.transform.rotozoom(self.night_canvas,angle,scale)
       clouds = pygame.transform.rotozoom(self.clouds,self.cloud_theta*180/np.pi,scale)
+      clouds_night = pygame.transform.rotozoom(self.clouds_night,self.cloud_theta*180/np.pi,scale)
       r = self.atmosphere.draw_at(surface,pos,scale,self.parameters[0],self.parameters[1],self.parameters[3])
       r = r.union(surface.blit(
+         clouds_night,
+         (pos[0] - clouds.get_width()//2,pos[1] - clouds.get_height()//2),
+         pygame.Rect(0,0,clouds_night.get_width()//2,clouds_night.get_height())
+      ))
+      r = r.union(surface.blit(
          clouds,
-         (pos[0] - clouds.get_width()//2,pos[1] - clouds.get_height()//2)
+         (pos[0],pos[1] - clouds.get_height()//2),
+         pygame.Rect(clouds.get_width()//2,0,night.get_width()//2,clouds_night.get_height())
       ))
       r = r.union(surface.blit(
          day,
@@ -231,6 +239,7 @@ class PlanetSpriteFactory(object):
       self.city_spritesheet = res.image['cityscapes']
       self.atmosphere = Atmosphere(res.image['atmosphere_colormap'],res.image['atmosphere'],res.image['enlightened_atmosphere'])
       self.clouds = res.image['clouds']
+      self.clouds_night = res.image['clouds_night']
    def make_planet(self,universe,pos,bindex=None,cindex=None):
       bindex = bindex or np.random.randint(1,len(self.biome_maps)) # start at 1 because 0 is my thing
       cindex = cindex or np.random.randint(0,len(self.color_maps))
@@ -241,7 +250,8 @@ class PlanetSpriteFactory(object):
          self.color_maps[cindex%len(self.color_maps)],
          self.city_spritesheet,
          self.atmosphere,
-         self.clouds
+         self.clouds,
+         self.clouds_night,
       )
 
 if __name__ == "__main__":
