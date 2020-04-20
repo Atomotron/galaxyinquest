@@ -37,7 +37,7 @@ class Resources(object):
          # progress ranges from 0.0 to slightly less than 1.0
          # we never want to show a full loading bar because when it's full, we move on and quit loading!
          progress = i / (len(to_load))
-         text = font.render("Loading "+name, True, (233,83,50))
+         text = font.render("Loading "+str(filename), True, (233,83,50))
          text_pos = (0,screen.get_height() - self.FONT_HEIGHT - self.LOADING_BAR_HEIGHT)
          screen.blit(text,text_pos)
          pygame.draw.rect(
