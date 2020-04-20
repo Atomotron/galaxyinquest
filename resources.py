@@ -3,7 +3,6 @@ import pygame
 import random
 from sys import exit
 from pygame.locals import *
-from bars import Bar
 
 class Resources(object):
    LOADING_BAR_HEIGHT = 32
@@ -19,8 +18,7 @@ class Resources(object):
       to_load = [(name,sounds[name],'sound') for name in sounds]
       to_load += [(name,images[name],'image') for name in images]
       to_load += [(name,fonts[name],'font') for name in fonts]
-      barTest = Bar(screen,(300,250),(0),(218,165,32))
-      loading_screen = pygame.image.load("img/Backgrounds/canvas.png")
+      loading_screen = pygame.image.load("img/loadingscreen.png")
       font = pygame.font.Font('fonts/LiberationSans-Regular.ttf', self.FONT_HEIGHT)
       screen.blit(loading_screen,(0,0))
       
