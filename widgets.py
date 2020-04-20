@@ -273,6 +273,10 @@ class UI(object):
          self.planet_bars['r'].pos = planet.pos
          self.planet_bars['g'].pos = planet.pos
          self.planet_bars['b'].pos = planet.pos
+         self.planet_bars['r'].responsive = not model.enlightened
+         self.planet_bars['g'].responsive = not model.enlightened
+         self.planet_bars['b'].responsive = not model.enlightened
+            
          for k in 'rgb':
             if self.planet_bars[k].activated and player.inventory[k] < player.INVENTORY_CAPACITY:
                delta = 0

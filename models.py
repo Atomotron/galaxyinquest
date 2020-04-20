@@ -36,8 +36,8 @@ class SineModel(Model):
     TECH_SPEED = 0.01
 
     # The range of temp and sea values required for pop growth
-    GOOD_TEMP_ZONE = 0.8
-    GOOD_SEA_ZONE = 0.8
+    GOOD_TEMP_ZONE = 0.4
+    GOOD_SEA_ZONE = 0.4
     GOOD_POP_ZONE = 0.25  # width around 0.5 pop for tech growth
 
     EVENT_DELTA = {  # dsea,dtemp,pop factor,dtech
@@ -46,9 +46,11 @@ class SineModel(Model):
         'plauge': (0.0, 0.0, 0.8, 0.0),
         'monsoon': (0.3, -0.0, 0.95, 0.0),
         'sandstorm': (-0.3, 0.0 , 0.95 , 0.0),
+        'blizzard'   : (0, 0.3 , 0.95 , 0.0),
+        'wildfire'   : (0, -0.3 , 0.95 , 0.0),
     }
     EVENT_PERIOD = 4
-
+    ENLIGHTENED_FIX_STRENGTH = 0.1
     def __init__(self):
         # Choose random starting values
         super().__init__(
@@ -132,6 +134,8 @@ class SineModel(Model):
                 self.tech = 0
         if self.tech >= 1:
             self.enlightened = True
+            self.sea -= self.sea*ds*self.ENLIGHTENED_FIX_STRENGTH
+            self.temp -= self.temp*ds*self.ENLIGHTENED_FIX_STRENGTH
         self.pop = np.clip(self.pop, 0, 1)
         self.tech = np.clip(self.tech, 0, 1)
 
