@@ -277,7 +277,7 @@ class Package(Physical):
       self.theta += self.omega
       super().tick(dt)
    def draw(self,screen,camera):
-      rotated_sprite = pygame.transform.rotozoom(self.universe.package_sheet.subsurface(self.rect),self.theta * 180 / np.pi,1)
+      rotated_sprite = pygame.transform.rotozoom(self.universe.package_sheet.subsurface(self.rect),self.theta * 180 / np.pi,camera.zoom)
       pos = vfloor(camera.cam(self.pos) - vfloat(rotated_sprite.get_size())/2)
       return screen.blit(rotated_sprite,pos)
       
