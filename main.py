@@ -9,6 +9,7 @@ import planet
 import widgets
 from models import PlanetModel
 import itertools
+import resources
 class Planet(object):
    PLANET_CONNECTION_RADIUS = 160 # How many units we can be off the surface of the planet for us to count as "orbiting"
    REFRESH_TIME = 1000/2 # refresh no fewer than 2 times per second
@@ -16,8 +17,10 @@ class Planet(object):
    STATUS_OFFSET_BELOW_TITLE = 20
    ENLIGHTENMENT_STATUS_FULL = Rect(90,0,62,15)
    ENLIGHTENMENT_STATUS_EMPTY = Rect(90,15,62,15)
-   def __init__(self,universe,planet_sprite,pos,mass,radius):
+   def __init__(self,res,universe,planet_sprite,pos,mass,radius):
       self.universe = universe
+      self.res = res
+      self.ui_sheet = res.image['ui']
       self.universe.things.append(self) # we want to receive ticks
       universe.gravitators.append(self)
       universe.camera_targets.append(self)
@@ -30,7 +33,7 @@ class Planet(object):
       self.refresh_time = 0
       self.model = PlanetModel()
       self.name = planet.generate_name()
-      self.title = self.universe.fonts[1].render(self.name,True,(255,255,255))
+      self.title = self.res.font['large'].render(self.name,True,(255,255,255))
       
    def tick(self,dt):
       self.model.tick(dt)
@@ -49,12 +52,12 @@ class Planet(object):
       status_pos = (pos[0]-self.ENLIGHTENMENT_STATUS_FULL.width//2,pos[1]+self.STATUS_OFFSET_BELOW_TITLE)
       cut = int(self.model.tech*self.ENLIGHTENMENT_STATUS_FULL.width)
       screen.blit(
-         self.universe.ui_sheet,
+         self.ui_sheet,
          status_pos,
          Rect(self.ENLIGHTENMENT_STATUS_FULL.topleft,(cut,self.ENLIGHTENMENT_STATUS_FULL.height)),
       )
       screen.blit(
-         self.universe.ui_sheet,
+         self.ui_sheet,
          (status_pos[0]+cut,status_pos[1]),
          Rect(
             (self.ENLIGHTENMENT_STATUS_EMPTY.left+cut,self.ENLIGHTENMENT_STATUS_EMPTY.top),
@@ -122,6 +125,14 @@ class Physical(object):
       self.acc = new_acc # save acceleration for next frame
       
 class Player(Physical):
+   RECTS = {
+      'U': Rect(0,0,52,58),
+      'orb_small': Rect(57,44,10,10),
+      'orb_large': Rect(52,10,28,29),
+      'U_glow': Rect(0,58,52,58),
+      'orb_small_glow': Rect(52,97,19,19),
+      'orb_large_glow': Rect(52,68,28,29),
+   }
    RADIUS = 32 # radius for physics purposes
    THRUST = 0.00025
    ABUSALEHBREAKS = 0.005 # I will put this in properly tomorrow
@@ -135,11 +146,10 @@ class Player(Physical):
    FIRE_RATE = 200
    FIRE_VEL = 0.3
    BLOW_CHUNK = 0.1
-   def __init__(self,universe,spritesheet,rects,sounds,pos,angle=0,vel=(0,0),inventory={'r':0,'g':0,'b':0}):
+   def __init__(self,res,universe,pos,angle=0,vel=(0,0),inventory={'r':0,'g':0,'b':0}):
       super().__init__(universe,pos,vel,radius=self.RADIUS,on_hit = self.hit)
-      self.sprites = {k:spritesheet.subsurface(rects[k]) for k in rects}
-      self.rects = rects
-      self.sounds = sounds
+      self.res = res
+      self.sprites = {k:res.image['ship'].subsurface(self.RECTS[k]) for k in self.RECTS}
       self.initial_pos = vfloat(pos)# for teleporting home
       self.initial_vel = vfloat(vel) # for teleporting home
       self.angle = angle
@@ -187,11 +197,11 @@ class Player(Physical):
       if self.fire_countdown < 0 and self.selected_slot:
          self.fire_countdown = self.FIRE_RATE
          if self.inventory[self.selected_slot] > 0:
-            self.sounds['fire'].play()
+            self.res.sound['fire'].play()
             axis = np.array((np.cos(self.angle),np.sin(self.angle)))
             Package(self.universe,self.selected_slot,self.pos+axis*30,self.vel + axis*self.FIRE_VEL,radius=10,on_hit=self.make_onhit())
          else:
-            self.sounds['empty'].play()
+            self.res.sound['empty'].play()
       else:
          self.fire_countdown -= dt
    
@@ -208,15 +218,15 @@ class Player(Physical):
          return np.array((0.0,0.0))
    def hit(self,obj,v_dot_r_hat):
       if v_dot_r_hat > 0.1:
-         self.sounds['bounce'].set_volume(v_dot_r_hat*self.BOUNCE_VOLUME) # Quiet sound for tiny bounce
-         self.sounds['bounce'].play() 
+         self.res.sound['bounce'].set_volume(v_dot_r_hat*self.BOUNCE_VOLUME) # Quiet sound for tiny bounce
+         self.res.sound['bounce'].play() 
          
    def warp_home(self):
       if self.pos[0] < self.BOUNDARIES[0][0] or self.pos[0] > self.BOUNDARIES[0][1] or \
          self.pos[1] < self.BOUNDARIES[1][0] or self.pos[1] > self.BOUNDARIES[1][1]:
          self.pos = self.initial_pos
          self.vel = self.initial_vel
-         self.sounds['warp_home'].play()
+         self.res.sound['warp_home'].play()
          
    def tick(self,dt): 
       self.thrusting = self.thrusting and pygame.mouse.get_pressed()[0]
@@ -264,6 +274,7 @@ class Package(Physical):
    OMEGA = 0.1
    def __init__(self,universe,sprite_name,pos,vel,radius,on_hit=None):
       super().__init__(universe,pos,vel,radius,on_hit = lambda obj,v_dot_r_hat: self.destroy_and_then(on_hit,obj,v_dot_r_hat))
+      self.sheet = universe.res.image['packages']
       self.universe.sprites.append(self)
       self.rect = random.choice(self.universe.PACKAGE_RECTS[sprite_name])
       self.theta = 0
@@ -277,7 +288,7 @@ class Package(Physical):
       self.theta += self.omega
       super().tick(dt)
    def draw(self,screen,camera):
-      rotated_sprite = pygame.transform.rotozoom(self.universe.package_sheet.subsurface(self.rect),self.theta * 180 / np.pi,camera.zoom)
+      rotated_sprite = pygame.transform.rotozoom(self.sheet.subsurface(self.rect),self.theta * 180 / np.pi,camera.zoom)
       pos = vfloor(camera.cam(self.pos) - vfloat(rotated_sprite.get_size())/2)
       return screen.blit(rotated_sprite,pos)
       
@@ -297,29 +308,28 @@ class Universe(object):
          Rect(0,40,20,20),
       ],
    }
-   def __init__(self,planet_factory,background,shadow,fonts,ui_sheet,package_sheet):
+   def __init__(self,res,planet_factory):
+      self.res = res
       self.planet_factory = planet_factory
-      self.background = background
-      self.wrapping_rect = background.get_rect() # if wrapping_rect is null, use the background rect
+      self.background = res.image['background_base']
+      self.shadow = res.image['shadow_outline']
+      self.scaled_shadow = self.shadow
+      self.screen_rect = self.background.get_rect() # if wrapping_rect is null, use the background rect
       self.sprites = [] # things that need to have draw(screen) called on them
       self.things = [] # things that need to have tick(dt) called on them
       self.gravitators = [] # things that create gravitational fields    
       self.camera_targets = [] # Things that the camera should try to display  
-      self.dirty_rects = [background.get_rect()] # patches of the background that will need to be redrawn
+      self.dirty_rects = [self.background.get_rect()] # patches of the background that will need to be redrawn
       self.player = None
-      self.shadow = shadow
-      self.scaled_shadow = shadow
-      self.ui_sheet = ui_sheet
+      self.ui_sheet = res.image['ui']
       self.zoom = 1
       self.camera = np.array((0.0,0.0))
       self.camera_urgency = 1
       self.target_zoom = 1
       self.target_reached = False
       self.target_camera = np.array((0.0,0.0))
-      self.rect_offset = vfloat(self.wrapping_rect.size)/2 # To move the origin from the top left to the center of the screen
+      self.rect_offset = vfloat(self.screen_rect.size)/2 # To move the origin from the top left to the center of the screen
       self.age = 0
-      self.fonts = fonts
-      self.package_sheet = package_sheet
       
    def cam(self,pos):
       '''Adjusts a position to take in to account our camera and zoom.'''
@@ -358,8 +368,8 @@ class Universe(object):
          min_y = min([o.pos[1] for o in self.camera_targets]) - self.MARGIN
          max_y = max([o.pos[1] for o in self.camera_targets]) + self.MARGIN
          self.target_zoom = min(
-            self.wrapping_rect.width/(max_x-min_x),
-            self.wrapping_rect.height/(max_y-min_y),
+            self.screen_rect.width/(max_x-min_x),
+            self.screen_rect.height/(max_y-min_y),
             1 # Never zoom closer than 1
          )
          self.target_camera = np.array((
@@ -374,7 +384,7 @@ class Universe(object):
          self.ui.tick(dt)
          
    def add_planet(self,pos,mass):
-      Planet(self,self.planet_factory.make_planet(self,pos),pos,mass,80)
+      Planet(self.res,self,self.planet_factory.make_planet(self,pos),pos,mass,80)
 
    def populate(self):
       self.add_planet((-300,300),20)
@@ -386,61 +396,46 @@ if __name__ == "__main__":
    pygame.init()
    screen_size = (1024,768)
    screen = pygame.display.set_mode(screen_size)
-   clock = pygame.time.Clock()
-   load = pygame.image.load('img/testbackground.png')
-   planet_factory = planet.PlanetSpriteFactory(
-      pygame.image.load("img/terrain.png").convert_alpha(),
-      pygame.image.load("img/planet.png").convert_alpha(),
-      pygame.image.load("img/cityscapes.png").convert_alpha(),
-      pygame.image.load("img/atmosphere_color.png").convert_alpha(),
-      pygame.image.load("img/AtmosphereWhite.png").convert_alpha(),
-      pygame.image.load("img/Clouds.png").convert_alpha(),
+   clock = pygame.time.Clock()  
+   res = resources.Resources(
+      screen,
+      images = {
+         'colormaps' : "img/terrain.png",
+         'biomemaps' : "img/planet.png",
+         'cityscapes' : "img/cityscapes.png",
+         'atmosphere_colormap' : "img/atmosphere_color.png",
+         'atmosphere' : "img/AtmosphereWhite.png",
+         'clouds' : "img/Clouds.png",
+         'ui'  : "img/ui.png",
+         'background_base' : "img/nebula.jpg",
+         'shadow_outline' : "img/shadow_outline.png",
+         'packages'  :  "img/packages.png",
+         'ship'   : "img/ship58h.png",
+      },
+      sounds = {
+         'bounce':"sounds/bounce_planet_short.ogg",
+         'warp_home':"sounds/error.ogg",
+         'fire':"sounds/deselect.ogg",
+         'empty':"sounds/bounce_border.ogg",
+         'engine' :  pygame.mixer.Sound("sounds/sfx_engine_loop.ogg"),
+         'engine_start' :  pygame.mixer.Sound("sounds/sfx_engine_initial.ogg"),
+         'engine_stop'  :  pygame.mixer.Sound("sounds/sfx_engine_off.ogg"),
+         'abusalehbreaks'  :  pygame.mixer.Sound("sounds/abubreak.ogg"),
+         'select'  :  pygame.mixer.Sound("sounds/select.ogg"),
+         'song1'  :  pygame.mixer.Sound("sounds/song1.ogg"),
+         'song2'  :  pygame.mixer.Sound("sounds/song2.ogg"),
+      },
+      fonts = {
+         'small' : ("fonts/monodb_.ttf",16),
+         'large' : ("fonts/monodb_.ttf",24),
+      },
    )
-   ui_sheet = pygame.image.load("img/ui.png").convert_alpha()
-   font = pygame.font.Font("fonts/monodb_.ttf",16)
-   font_big = pygame.font.Font("fonts/monodb_.ttf",24)
-   universe = Universe(
-      planet_factory,
-      pygame.image.load("img/nebula.jpg").convert(),
-      pygame.image.load("img/shadow_outline.png").convert_alpha(),
-      (font,font_big),
-      ui_sheet,
-      pygame.image.load("img/packages.png").convert_alpha(),
-   )
+   planet_factory = planet.PlanetSpriteFactory(res)
+   universe = Universe(res,planet_factory)
    universe.populate()
-   Player(
-      universe,pygame.image.load("img/ship58h.png").convert_alpha(),
-      {
-         'U': Rect(0,0,52,58),
-         'orb_small': Rect(57,44,10,10),
-         'orb_large': Rect(52,10,28,29),
-         'U_glow': Rect(0,58,52,58),
-         'orb_small_glow': Rect(52,97,19,19),
-         'orb_large_glow': Rect(52,68,28,29),
-      },
-      {
-         'bounce':pygame.mixer.Sound("sounds/bounce_planet_short.ogg"),
-         'warp_home':pygame.mixer.Sound("sounds/error.ogg"),
-         'fire':pygame.mixer.Sound("sounds/deselect.ogg"),
-         'empty':pygame.mixer.Sound("sounds/bounce_border.ogg"),
-      },
-      (0,0),0,(0.0,0)
-   )
+   Player(res,universe,(0,0),0,(0.0,0))
    pygame.mixer.Sound("sounds/space_ambient.ogg").play(loops=-1,fade_ms=1000)
-   sounds = {
-      'engine' :  pygame.mixer.Sound("sounds/sfx_engine_loop.ogg"),
-      'engine_start' :  pygame.mixer.Sound("sounds/sfx_engine_initial.ogg"),
-      'engine_stop'  :  pygame.mixer.Sound("sounds/sfx_engine_off.ogg"),
-      'abusalehbreaks'  :  pygame.mixer.Sound("sounds/abubreak.ogg"),
-      'select'  :  pygame.mixer.Sound("sounds/select.ogg"),
-      'song1'  :  pygame.mixer.Sound("sounds/song1.ogg"),
-      'song2'  :  pygame.mixer.Sound("sounds/song2.ogg"),
-   }
-   ui = widgets.UI(universe,sounds,ui_sheet)
-   while True:
-      dt = clock.tick(30)
-      screen.blit(load, (0,0))
-      pygame.display.flip()
+   ui = widgets.UI(universe,res.sound,res.image['ui'])
    while True:
         dt = clock.tick(30)  # If we go faster than 60fps, stop and wait.
         for event in pygame.event.get():  # Get everything that's happening
