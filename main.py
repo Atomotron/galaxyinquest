@@ -6,7 +6,7 @@ import numpy as np
 from util import vfloor,vfloat
 import planet
 import widgets
-from models import PlanetModel
+from NewPlanetModel import PlanetModel
 
 class Planet(object):
    '''A model of the evolution of a planet. Set to randomly increase and decrease parameters kind of like the stock market.'''

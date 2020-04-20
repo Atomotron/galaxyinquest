@@ -12,41 +12,17 @@ class PlanetModel(object):
       self.temp = np.random.uniform(-0.3,0.3)
       self.pop = np.random.uniform(0.0,1.0)
       self.tech = np.random.uniform(0.0,1.0)
-      self.dSea = 0
-      self.dPop = 0
-      self.dTech = 0
-      self.dTemp = 0
       self.maxPop = 1
-   def random_delta(self,dt,value,off_center):
-      step = np.random.uniform(-1.0,1.0)*self.SPEED*dt
-      restoration = - self.PULL_TO_CENTER*off_center*dt
-      return value + step + restoration
+      self.ticks = 0
    def tick(self,dt):
-       self.dPop = (self.pop * (2.7 ** 0.0001)) - self.pop
-       self.dTemp += (self.pop - 0.5) * 0.0000001
-       self.dSea -= (self.temp - 0.5) * 0.0000001
-       if (self.temp > 0.65 or self.temp < 0.35):
-           self.dPop = -self.dPop
-           optTemp = False
+       self.ticks += 1*dt
+       self.temp += -self.sea*dt*0.0001
+       self.temp = np.clip(self.temp,-1,1)
+       self.sea += self.temp*dt*0.0001
+       self.sea = np.clip(self.sea, -1, 1)
+       self.pop = np.clip(self.pop, 0, 1)
+       if -0.3 < self.temp < 0.3 and -0.3 < self.sea < 0.3:
+           self.pop += 0.0001
        else:
-           optTemp = True
-       if (self.sea > 0.65):
-           self.maxPop = 1 - ((self.sea - 0.65) / 1.35)
-           self.dTemp -= (self.sea - 0.5) * 0.0000001
-           optSea = False
-       elif (self.sea < 0.35):
-           self.maxPop = 1 - ((0.35 - self.sea) / 1.35)
-           self.dTemp += (self.sea - 0.5) * 0.0000001
-           optSea = False
-       else:
-           optSea = True
-       if (optSea and optTemp):
-           self.dTech = 0.00001
-       else:
-           self.dTech = 0
-       self.sea += self.dSea
-       self.temp += self.dTemp
-       self.tech += self.dTech
-       self.pop += self.dPop
-       if self.pop > self.maxPop:
-           self.pop = self.maxPop
+           self.pop -= 0.0001
+
