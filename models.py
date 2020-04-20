@@ -134,8 +134,8 @@ class SineModel(Model):
                 self.tech = 0
         if self.tech >= 1:
             self.enlightened = True
-            self.sea -= self.sea*ds*ENLIGHTENED_FIX_STRENGTH
-            self.temp -= self.temp*ds*ENLIGHTENED_FIX_STRENGTH
+            self.sea -= self.sea*ds*self.ENLIGHTENED_FIX_STRENGTH
+            self.temp -= self.temp*ds*self.ENLIGHTENED_FIX_STRENGTH
         self.pop = np.clip(self.pop, 0, 1)
         self.tech = np.clip(self.tech, 0, 1)
 
