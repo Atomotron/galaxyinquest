@@ -67,7 +67,8 @@ class SineModel(Model):
         self.probability_sandstorm = 0
         self.probability_blizzard = 0
         self.probability_wildfire = 0
-        
+        self.status = ""
+        self.status_timer = 0
     def create_event(self):
         # Probability of event happening (worldwar,war,plague,monsoon,sandstorm)
         event_prob = np.random.uniform(0, 1)
@@ -83,7 +84,7 @@ class SineModel(Model):
             if event_prob < self.probability_war :
                 self.start_event("war")
                 self.event_timer = 0 
-                
+                self.status = "War"
             if self.pop > 0.8 and self.event_timer > 30:
                 self.probability_world_war = 0.0007
                 self.probability_plaque = 0.0007
@@ -91,39 +92,45 @@ class SineModel(Model):
                 if event_prob < self.probability_world_war and event_prob2 == 0:
                     self.start_event("world_war")
                     self.event_timer = 0
+                    self.status = "World_War"
                 if event_prob < self.probability_plague and event_prob2 == 1:
                     self.start_event("plauge")
                     self.event_timer = 0
-                    
+                    self.status = "Plague"
             
         if self.sea > 0.5  and self.event_timer > 30:
             self.probability_monsoon = 0.0008
             if event_prob < self.probability_monsoon :
                 self.start_event("monsoon")
-                self.event_timer = 0 
-       
+                self.event_timer = 0
+                self.status = "Monsoon"
         if self.sea <  - 0.5  and self.event_timer > 30:
             self.probability_sandstorm = 0.0008
             if event_prob < self.probability_sandstorm :
                 self.start_event("sandstorm")
-                self.event_timer = 0 
-       
+                self.event_timer = 0
+                self.status = "Sandstorm"
         if self.temp > 0.5  and self.event_timer > 30:
             self.probability_wildfire = 0.0008
             if event_prob < self.probability_wildfire :
                 self.start_event("wildfire")
-                self.event_timer = 0 
-                
+                self.event_timer = 0
+                self.status = "Wildfire"
         if self.temp < -0.5  and self.event_timer > 30:
             self.probability_blizzard = 0.0008
             if event_prob < self.probability_blizzard :
                 self.start_event("blizzard")
-                self.event_timer = 0 
-        
+                self.event_timer = 0
+                self.status = "Blizzard"
             
     def tick(self, dt):
         ds = self.speed * dt
         self.create_event()
+        if self.status != "":
+           self.status_timer += dt
+        if self.status_timer == 1000:
+           self.status_timer = 0
+           self.status = ""
         # Maybe start an event
         # if self.event_timer > self.EVENT_PERIOD:
         #   self.event_timer = 0
@@ -158,7 +165,7 @@ class SineModel(Model):
         self.temp = self.temp + dtemp
         self.pop = np.clip(self.pop * dpop, 0, 1)
         self.tech = np.clip(self.tech + dtech, 0, 1)
-
+        self.status_timer = 0
 
 class StochasticModel(Model):
     SPEED = 0.002  # average change to parameters each milisecond
