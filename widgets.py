@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 from pygame.locals import *
 from pygame import Rect
-
+from collections import deque
 from util import vfloat,vfloor
-
-CARGO_BAR_RECTS = {
+import random
+CARGO_RECTS = {
    'off_full_r':Rect(0,12,30,112),
    'off_full_g':Rect(30,12,30,112),
    'off_full_b':Rect(60,12,30,112),
    'off_empty_r':Rect(0,12+124,30,112),
    'off_empty_g':Rect(30,12+124,30,112),
    'off_empty_b':Rect(60,12+124,30,112),
-   'on_full_r':Rect(0,12,30,112),
-   'off_full_g':Rect(30,12+124*2,30,112),
-   'off_full_b':Rect(60,12+124*2,30,112),
-   'off_empty_r':Rect(0,12+124*3,30,112),
-   'off_empty_g':Rect(30,12+124*3,30,112),
-   'off_empty_b':Rect(60,12+124*3,30,112),
+   'on_full_r':Rect(0,12+124*2,30,112),
+   'on_full_g':Rect(30,12+124*2,30,112),
+   'on_full_b':Rect(60,12+124*2,30,112),
+   'on_empty_r':Rect(0,12+124*3,30,112),
+   'on_empty_g':Rect(30,12+124*3,30,112),
+   'on_empty_b':Rect(60,12+124*3,30,112),
 }
 
 class BarButton(object):
@@ -33,8 +33,9 @@ class BarButton(object):
       self.on_full = on_full
       self.on_empty = on_empty
       self.vertical = vertical
+      self.value = value
       self.responsive = responsive
-      self.early_cap = 0 # for when 100% full corresponds to a slice short of 100% of the full image
+      self.early_cut = early_cut # for when 100% full corresponds to a slice short of 100% of the full image
       self.sound = sound
       self.mutually_exclusive = mutually_exclusive
       self.sticky = sticky
@@ -89,7 +90,7 @@ class BarButton(object):
             self.pos[0],
             self.pos[1] + cut
          )
-         full_rect = Rect((0,0)
+         full_rect = Rect((0,cut),
             (full_sprite.get_width(),
              full_sprite.get_height() - cut)
          )
@@ -104,7 +105,7 @@ class BarButton(object):
             self.pos[0] + cut,
             self.pos[1]
          )
-         empty_rect = Rect((0,0),
+         empty_rect = Rect((cut,0),
             (empty_sprite.get_width() - cut,
              empty_sprite.get_height())
          )
@@ -113,12 +114,23 @@ class BarButton(object):
             
 
 class UI(object):
-   def __init__(self,universe,sounds,sheet=None):
+   def __init__(self,universe,sounds,sheet):
       self.sounds = sounds
       self.universe = universe
+      self.universe.ui = self
       self.sheet = sheet
       self.widgets = []
       # Create cargo bar
+      self.cargo_bars = {}
+      cargo_bar_pos = (1024 - 120,768-140)
+      for i,c in enumerate('rgb'):
+         self.cargo_bars[c] = BarButton(
+            self,(i*CARGO_RECTS['off_full_'+c].width+cargo_bar_pos[0],cargo_bar_pos[1]),sheet,
+            CARGO_RECTS['off_full_'+c],CARGO_RECTS['off_empty_'+c],CARGO_RECTS['on_full_'+c],CARGO_RECTS['on_empty_'+c],
+            value=random.uniform(0,1),sound=sounds['select'],
+         )
+      self.next_track_in = 1000*40
+      self.sequence = deque(['song2','song1'])
    def handle_event(self,event):
       for widget in self.widgets:
          if widget.handle_event(event):
@@ -134,4 +146,13 @@ class UI(object):
          elif event.type == KEYDOWN and event.key == K_SPACE:
             self.sounds['abusalehbreaks'].play()
    def draw(self,screen,camera):
-      return [widget.draw() for widget in self.widgets]
+      return [widget.draw(screen,camera) for widget in self.widgets]
+   def tick(self,dt):
+      if self.next_track_in <= 0:
+         track = self.sequence.pop()
+         self.sounds[track].play(fade_ms=3000)
+         self.sequence.appendleft(track)
+         self.next_track_in = 1000*60 * 4
+      else:
+         self.next_track_in -= dt
+      

@@ -228,6 +228,10 @@ class Universe(object):
          if rect: # If the draw function has created a dirty rect
             self.dirty_rects.append(rect)
             touched_rects.append(rect)
+      if self.ui:
+         more_dirty = self.ui.draw(screen,self)
+         self.dirty_rects += more_dirty
+         touched_rects += more_dirty
       return touched_rects
    
    def tick(self,dt):
@@ -253,6 +257,8 @@ class Universe(object):
       self.zoom += (self.target_zoom-self.zoom)*self.CAMERA_SPEED*dt*self.camera_urgency
       for thing in self.things:
          thing.tick(dt)
+      if self.ui: # Tick UI last
+         self.ui.tick(dt)
          
    def add_planet(self,pos,mass):
       Planet(self,self.planet_factory.make_planet(self,pos),pos,mass,80)
@@ -306,9 +312,12 @@ if __name__ == "__main__":
       'engine' :  pygame.mixer.Sound("sounds/sfx_engine_loop.ogg"),
       'engine_start' :  pygame.mixer.Sound("sounds/sfx_engine_initial.ogg"),
       'engine_stop'  :  pygame.mixer.Sound("sounds/sfx_engine_off.ogg"),
-      'abusalehbreaks'  :  pygame.mixer.Sound("sounds/abubreak.ogg")
+      'abusalehbreaks'  :  pygame.mixer.Sound("sounds/abubreak.ogg"),
+      'select'  :  pygame.mixer.Sound("sounds/select.ogg"),
+      'song1'  :  pygame.mixer.Sound("sounds/song1.ogg"),
+      'song2'  :  pygame.mixer.Sound("sounds/song2.ogg"),
    }
-   ui = widgets.UI(universe,sounds)    
+   ui = widgets.UI(universe,sounds,pygame.image.load("img/ui.png").convert_alpha())    
    while True:
         dt = clock.tick(60)  # If we go faster than 60fps, stop and wait.
         for event in pygame.event.get():  # Get everything that's happening
