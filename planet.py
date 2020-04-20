@@ -190,6 +190,11 @@ class PlanetSprite(object):
       angle = self.theta * 180 / np.pi
       scale = camera.zoom*self.scale
       pos = vfloor(camera.cam(self.pos))
+      if pos[0] < -self.CANVAS_SIZE[0]//2 or \
+         pos[0] > surface.get_width()+self.CANVAS_SIZE[0]//2 or \
+         pos[1] < -self.CANVAS_SIZE[1]//2 or \
+         pos[1] > surface.get_height()+self.CANVAS_SIZE[1]//2:
+         return None         
       day = pygame.transform.rotozoom(self.day_canvas,angle,scale)
       night = pygame.transform.rotozoom(self.night_canvas,angle,scale)
       clouds = pygame.transform.rotozoom(self.clouds,self.cloud_theta*180/np.pi,scale)

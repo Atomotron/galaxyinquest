@@ -329,7 +329,7 @@ class Universe(object):
          Rect(0,40,20,20),
       ],
    }
-   PLANET_SPAWNING_DISTANCE = 300 # Minimum distance between planets
+   PLANET_SPAWNING_DISTANCE = 500 # Minimum distance between planets
    def __init__(self,res,planet_factory):
       self.res = res
       self.planet_factory = planet_factory
@@ -423,6 +423,26 @@ class Universe(object):
       effects_to_remove = [effect for effect in self.effects if effect.tick(dt)]
       for effect in effects_to_remove:
          self.effects.remove(effect)
+      
+      # Check to see if we have won
+      finished_planets = [planet for planet in self.gravitators if planet.model.enlightened]
+      dead_planets = [planet for planet in self.gravitators if planet.model.pop <= 0.0]
+      if len(finished_planets) + len(dead_planets) == len(self.gravitators):
+         def next():
+            self.clear()
+            n = min(10,len(finished_planets) + 3)
+            self.populate(planets=n)
+         self.ui.overlay(
+            'end',
+            after = next,
+            message = "Dead Planets: {} of {}\nAscended Populations: {} of {}".format(
+               len(dead_planets),
+               len(self.gravitators),
+               len(finished_planets),
+               len(self.gravitators)
+            ),
+         )         
+      
       if self.ui: # Tick UI last
          self.ui.tick(dt)
          
@@ -438,10 +458,14 @@ class Universe(object):
          return True
       for i in range(planets):
          done = False
-         while not done:
+         for attempt in range(0,1000):
             point = np.array((np.random.uniform(-1000,1000),np.random.uniform(-1000,1000)))
-            done = point_good(point)
-         self.add_planet(point,20)
+            if point_good(point):
+               done = True
+               break
+         if done:
+            self.add_planet(point,20)
+            points.append(point)
       Player(self.res,self,(0,0),0,(0.0,0))
       self.compute_target_camera()
       self.zoom = self.target_zoom
@@ -469,6 +493,7 @@ if __name__ == "__main__":
          'packages'  :  "img/packages.png",
          'ship'   : "img/ship58h.png",
          'effects'   : "img/eventanimation.png",
+         'end'   : "img/tutorial/endgamestate.png",
       },
       sounds = {
          'bounce':"sounds/bounce_planet_short.ogg",
@@ -486,6 +511,7 @@ if __name__ == "__main__":
       fonts = {
          'small' : ("fonts/monodb_.ttf",16),
          'large' : ("fonts/monodb_.ttf",24),
+         'huge' : ("fonts/monodb_.ttf",64),
       },
    )
    planet_factory = planet.PlanetSpriteFactory(res)

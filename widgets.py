@@ -227,6 +227,16 @@ class UI(object):
          self.universe.skip_next_tick = True
          screen.blit(self.overlay_image,(0,0))
          rect = self.overlay_image.get_rect()
+         if self.overlay_message:
+            print(self.overlay_message)
+            y = 0
+            for line in self.overlay_message.splitlines():
+               text = self.res.font['huge'].render(line, True, (255,255,255))
+               screen.blit(text,
+                  (rect.width//2 - text.get_width()//2,
+                   rect.height//2 - text.get_height()//2 + y,)
+               )
+               y += text.get_height()
          pygame.display.update([rect])
          looping = True
          while looping:
@@ -240,7 +250,6 @@ class UI(object):
                    exit()
                elif event.type == MOUSEBUTTONDOWN and event.button == 1:
                   looping = False
-         
          self.overlay_message = None
          self.overlay_image = None
          if self.after_overlay:
