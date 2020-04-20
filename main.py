@@ -3,7 +3,7 @@ import pygame
 from pygame.locals import *
 import numpy as np
 from sys import exit
-
+import random
 from util import vfloor,vfloat
 import planet
 import widgets
@@ -131,7 +131,7 @@ class Player(Physical):
       (-5000,5000)
    )
    INVENTORY_CAPACITY = 1.0
-   SUCK_SPEED = 0.00025
+   SUCK_SPEED = 0.0005
    FIRE_RATE = 200
    FIRE_VEL = 0.3
    BLOW_CHUNK = 0.1
@@ -174,11 +174,11 @@ class Player(Physical):
       self.inventory[k] = new_amount
       def on_hit(obj,vdotr):
          if k == 'r':
-            obj.model.temp += delta
+            obj.model.temp -= delta
          if k == 'g':
-            obj.model.pop += delta
+            obj.model.pop -= delta
          if k == 'b':
-            obj.model.sea += delta
+            obj.model.sea -= delta
       return on_hit
    
    def fire(self,dt):
@@ -189,7 +189,7 @@ class Player(Physical):
          if self.inventory[self.selected_slot] > 0:
             self.sounds['fire'].play()
             axis = np.array((np.cos(self.angle),np.sin(self.angle)))
-            Package(self.universe,'a',self.pos+axis*30,self.vel + axis*self.FIRE_VEL,radius=10,on_hit=self.make_onhit())
+            Package(self.universe,self.selected_slot,self.pos+axis*30,self.vel + axis*self.FIRE_VEL,radius=10,on_hit=self.make_onhit())
          else:
             self.sounds['empty'].play()
       else:
@@ -210,6 +210,7 @@ class Player(Physical):
       if v_dot_r_hat > 0.1:
          self.sounds['bounce'].set_volume(v_dot_r_hat*self.BOUNCE_VOLUME) # Quiet sound for tiny bounce
          self.sounds['bounce'].play() 
+         
    def warp_home(self):
       if self.pos[0] < self.BOUNDARIES[0][0] or self.pos[0] > self.BOUNDARIES[0][1] or \
          self.pos[1] < self.BOUNDARIES[1][0] or self.pos[1] > self.BOUNDARIES[1][1]:
@@ -260,29 +261,45 @@ class Player(Physical):
       ))
 
 class Package(Physical):
+   OMEGA = 0.1
    def __init__(self,universe,sprite_name,pos,vel,radius,on_hit=None):
       super().__init__(universe,pos,vel,radius,on_hit = lambda obj,v_dot_r_hat: self.destroy_and_then(on_hit,obj,v_dot_r_hat))
       self.universe.sprites.append(self)
-      self.rect = self.universe.PACKAGE_RECTS[sprite_name]
+      self.rect = random.choice(self.universe.PACKAGE_RECTS[sprite_name])
+      self.theta = 0
+      self.omega = random.uniform(-self.OMEGA,self.OMEGA)
    def destroy_and_then(self,next,obj,v_dot_r_hat):
       self.universe.sprites.remove(self)
       self.universe.things.remove(self)
       if next:
          next(obj,v_dot_r_hat)
+   def tick(self,dt):
+      self.theta += self.omega
+      super().tick(dt)
    def draw(self,screen,camera):
-      pos = vfloor(camera.cam(self.pos))
-      return pygame.draw.circle(
-         screen,
-         (255,255,255),
-         pos,
-         self.radius
-      )
+      rotated_sprite = pygame.transform.rotozoom(self.universe.package_sheet.subsurface(self.rect),self.theta * 180 / np.pi,1)
+      pos = vfloor(camera.cam(self.pos) - vfloat(rotated_sprite.get_size())/2)
+      return screen.blit(rotated_sprite,pos)
       
 class Universe(object):
    CAMERA_SPEED = 0.01 # The rate at which the camera approaches the target values
    MARGIN = 100
    PACKAGE_RECTS = {
-      'a':None
+      'r':[
+         Rect(0,0,20,20),
+         Rect(0,20,20,20),
+         Rect(0,40,20,20),
+      ],
+      'g':[
+         Rect(0,0,20,20),
+         Rect(0,20,20,20),
+         Rect(0,40,20,20),
+      ],
+      'b':[
+         Rect(0,0,20,20),
+         Rect(0,20,20,20),
+         Rect(0,40,20,20),
+      ],
    }
    def __init__(self,planet_factory,background,shadow,fonts,ui_sheet,package_sheet):
       self.planet_factory = planet_factory
@@ -391,7 +408,7 @@ if __name__ == "__main__":
       pygame.image.load("img/shadow_outline.png").convert_alpha(),
       (font,font_big),
       ui_sheet,
-      None
+      pygame.image.load("img/H20.png").convert_alpha(),
    )
    universe.populate()
    Player(

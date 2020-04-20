@@ -229,6 +229,7 @@ class UI(object):
       else:
          for p in self.planet_gui:
             p.visible = False
+            p.activated = False
       if self.universe.player:
          for k in 'rgb':
             if self.cargo_bars[k].activated:
