@@ -75,6 +75,9 @@ class BarButton(object):
       '''Returns true if we want to consume the event.'''
       if not self.responsive or not self.visible:
          return False
+
+      if event.type == KEYDOWN:
+          return False
       if event.button != 1:
          return False
       if event.type == MOUSEBUTTONDOWN:

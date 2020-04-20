@@ -386,8 +386,8 @@ if __name__ == "__main__":
    pygame.init()
    screen_size = (1024,768)
    screen = pygame.display.set_mode(screen_size)
-   clock = pygame.time.Clock()  
-   
+   clock = pygame.time.Clock()
+   load = pygame.image.load('img/testbackground.png')
    planet_factory = planet.PlanetSpriteFactory(
       pygame.image.load("img/terrain.png").convert_alpha(),
       pygame.image.load("img/planet.png").convert_alpha(),
@@ -436,7 +436,11 @@ if __name__ == "__main__":
       'song1'  :  pygame.mixer.Sound("sounds/song1.ogg"),
       'song2'  :  pygame.mixer.Sound("sounds/song2.ogg"),
    }
-   ui = widgets.UI(universe,sounds,ui_sheet)    
+   ui = widgets.UI(universe,sounds,ui_sheet)
+   while True:
+      dt = clock.tick(30)
+      screen.blit(load, (0,0))
+      pygame.display.flip()
    while True:
         dt = clock.tick(30)  # If we go faster than 60fps, stop and wait.
         for event in pygame.event.get():  # Get everything that's happening
