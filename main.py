@@ -352,6 +352,7 @@ class Universe(object):
       self.target_camera = np.array((0.0,0.0))
       self.rect_offset = vfloat(self.screen_rect.size)/2 # To move the origin from the top left to the center of the screen
       self.age = 0
+      self.skip_next_tick = False
       
    def cam(self,pos):
       '''Adjusts a position to take in to account our camera and zoom.'''
@@ -395,7 +396,9 @@ class Universe(object):
       ))
    
    def tick(self,dt):
-      
+      if self.skip_next_tick:
+         self.skip_next_tick = False
+         return
       if self.player.connected_planet:
          self.target_zoom = 1
          self.target_camera = self.player.connected_planet.pos
@@ -472,7 +475,15 @@ if __name__ == "__main__":
    pygame.mixer.Sound("sounds/space_ambient.ogg").play(loops=-1,fade_ms=1000)
    ui = widgets.UI(res,universe)
    universe.populate()
-   ui.overlay('background_base')
+   ui.overlay('img/tutorial/tutorial1.png',after = lambda: 
+      ui.overlay('img/tutorial/tutorial2.png',after = lambda: 
+      ui.overlay('img/tutorial/tutorial3.png',after = lambda: 
+      ui.overlay('img/tutorial/tutorial4.png',after = lambda: 
+      ui.overlay('img/tutorial/tutorial5.png',after = lambda: 
+      ui.overlay('img/tutorial/tutorial6.png',after = lambda: 
+      ui.overlay('img/tutorial/tutorial7.png',after = lambda: 
+      ui.overlay('img/tutorial/tutorial8.png'
+   ))))))))
    while True:
         dt = clock.tick(30)  # If we go faster than 60fps, stop and wait.
         for event in pygame.event.get():  # Get everything that's happening

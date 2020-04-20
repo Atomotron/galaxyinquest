@@ -224,13 +224,14 @@ class UI(object):
    def draw(self,screen,camera):
       dirty = [r for r in [widget.draw(screen,camera) for widget in self.widgets] if r]
       if self.overlay_image:
+         self.universe.skip_next_tick = True
          screen.blit(self.overlay_image,(0,0))
-         pygame.display.update(self.overlay_image.get_rect())
+         rect = self.overlay_image.get_rect()
+         pygame.display.update([rect])
          looping = True
          while looping:
             clock = pygame.time.Clock()
             for event in pygame.event.get():
-               print(event)
                if event.type == QUIT:
                    pygame.quit()
                    exit()
@@ -239,11 +240,14 @@ class UI(object):
                    exit()
                elif event.type == MOUSEBUTTONDOWN and event.button == 1:
                   looping = False
+         
+         self.overlay_message = None
          self.overlay_image = None
          if self.after_overlay:
-            self.after_overlay()
-         self.overlay_message = None
-         return self.overlay_image.get_rect()
+            l = self.after_overlay
+            self.after_overlay = None
+            l()
+         return [rect]
       return dirty
    def tick(self,dt):
       if self.universe.player and self.universe.player.connected_planet:
