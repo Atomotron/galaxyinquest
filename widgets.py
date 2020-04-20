@@ -170,7 +170,7 @@ class UI(object):
             self,(0,0),sheet,
             PLANET_RECTS['off_full_'+c],PLANET_RECTS['off_empty_'+c],PLANET_RECTS['on_full_'+c],PLANET_RECTS['on_empty_'+c],
             value=random.uniform(0,1),sound=sounds['select'],vertical=False,visible=False,sticky=False,follow_camera = np.array((0.0,25.0*i+25.0)+np.array(planet_bar_offset)),
-            responsive = True
+            responsive = True,early_cut=34
          )
       self.planet_gui = [self.planet_bars[k] for k in self.planet_bars]
       
