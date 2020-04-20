@@ -2,6 +2,7 @@
 import pygame
 from pygame.locals import *
 import numpy as np
+from sys import exit
 
 from util import vfloor,vfloat
 import planet
