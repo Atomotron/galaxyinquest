@@ -40,6 +40,8 @@ class Planet(object):
       
       self.event_activation_timer = 0
       self.queued_event = None
+      self.most_recent_status = ""
+      self.status_surface = None
    
    def need_to_refresh(self):
       s,t,p,e = self.most_recent_parameters
@@ -56,6 +58,13 @@ class Planet(object):
          self.queued_event = None
       self.event_activation_timer -= dt
                
+      # Update our label if need be
+      if self.model.status != self.most_recent_status:
+         self.most_recent_status = self.model.status
+         if not self.model.status:
+            self.status_surface = None
+         else:
+            self.status_surface = self.res.font['small'].render(self.model.status,True,(255,255,255))
       
       # Update the sprite if we have gone too long without doing so
       self.planet_sprite.set_parameters(self.model.sea,self.model.temp,self.model.pop,self.model.tech)
@@ -70,22 +79,28 @@ class Planet(object):
       pos = vfloor(camera.cam(self.pos-np.array((0.0,self.TITLE_OFFSET))))
       title_pos = (pos[0]-self.title.get_width()//2,pos[1]-self.title.get_height()//2)
       r = screen.blit(self.title,title_pos)
-      status_pos = (pos[0]-self.ENLIGHTENMENT_STATUS_FULL.width//2,pos[1]+self.STATUS_OFFSET_BELOW_TITLE)
       cut = int(self.model.tech*self.ENLIGHTENMENT_STATUS_FULL.width)
-      screen.blit(
-         self.ui_sheet,
-         status_pos,
-         Rect(self.ENLIGHTENMENT_STATUS_FULL.topleft,(cut,self.ENLIGHTENMENT_STATUS_FULL.height)),
-      )
-      screen.blit(
-         self.ui_sheet,
-         (status_pos[0]+cut,status_pos[1]),
-         Rect(
-            (self.ENLIGHTENMENT_STATUS_EMPTY.left+cut,self.ENLIGHTENMENT_STATUS_EMPTY.top),
-            (self.ENLIGHTENMENT_STATUS_FULL.width-cut,self.ENLIGHTENMENT_STATUS_FULL.height)
-         ),
-      )
-      return r.union(self.ENLIGHTENMENT_STATUS_FULL.move(status_pos))
+      if self.status_surface:
+         return r.union(screen.blit(
+            self.status_surface,
+            (pos[0]-self.status_surface.get_width()//2,pos[1]-self.status_surface.get_height()//2-self.title.get_height()//2)
+         )
+      else:
+         status_pos = (pos[0]-self.ENLIGHTENMENT_STATUS_FULL.width//2,pos[1]+self.STATUS_OFFSET_BELOW_TITLE)
+         screen.blit(
+            self.ui_sheet,
+            status_pos,
+            Rect(self.ENLIGHTENMENT_STATUS_FULL.topleft,(cut,self.ENLIGHTENMENT_STATUS_FULL.height)),
+         )
+         screen.blit(
+            self.ui_sheet,
+            (status_pos[0]+cut,status_pos[1]),
+            Rect(
+               (self.ENLIGHTENMENT_STATUS_EMPTY.left+cut,self.ENLIGHTENMENT_STATUS_EMPTY.top),
+               (self.ENLIGHTENMENT_STATUS_FULL.width-cut,self.ENLIGHTENMENT_STATUS_FULL.height)
+            ),
+         )
+         return r.union(self.ENLIGHTENMENT_STATUS_FULL.move(status_pos))
 
 class Physical(object):
    G = 0.25 # The strength of the force of gravity
