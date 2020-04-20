@@ -65,6 +65,8 @@ class SineModel(Model):
         self.probability_plague = 0
         self.probability_monsoon = 0
         self.probability_sandstorm = 0
+        self.probability_blizzard = 0
+        self.probability_wildfire = 0
         
     def create_event(self):
         # Probability of event happening (worldwar,war,plague,monsoon,sandstorm)
@@ -106,6 +108,17 @@ class SineModel(Model):
                 self.start_event("sandstorm")
                 self.event_timer = 0 
        
+        if self.temp > 0.5  and self.event_timer > 30:
+            self.probability_wildfire = 0.0008
+            if event_prob < self.probability_wildfire :
+                self.start_event("wildfire")
+                self.event_timer = 0 
+                
+        if self.temp < -0.5  and self.event_timer > 30:
+            self.probability_blizzard = 0.0008
+            if event_prob < self.probability_blizzard :
+                self.start_event("blizzard")
+                self.event_timer = 0 
         
             
     def tick(self, dt):
