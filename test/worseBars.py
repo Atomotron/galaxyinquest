@@ -32,7 +32,7 @@ class Bar():
         
     def update(self,dv):
 
-        if((self.variable+dv) <= self.maxPop and (self.variable+dv) >=0 ):
+        if((self.variable+dv) <= self.maxPop and (self.variable+dv) >=-1 ):
             self.variable += dv
 
         if(self.variable > self.maxPop):
@@ -83,7 +83,7 @@ if __name__ == "__main__":
     
     while True:
 
-        dPop = (pop * (2.7**0.0001)) - pop 
+        dPop = (pop * (2.7**0.0001)) - pop
         dTemp += (pop - 0.5) * 0.0000001
         dSea -= (temp - 0.5) * 0.0000001 
         
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         
         
         
-        if( optSea and optTemp):
+        if(optSea and optTemp):
             dTech = 0.00001
         else:
             dTech = 0
@@ -130,8 +130,7 @@ if __name__ == "__main__":
             elif event.type == KEYDOWN and event.key == K_ESCAPE:
                     pygame.quit()
                     exit()
-    
-        
+
         screen.fill((0,0,0))
         
         tempBar.update(dTemp)

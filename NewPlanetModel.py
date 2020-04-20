@@ -8,8 +8,8 @@ class PlanetModel(object):
       # Choose random starting values
       self.string = string
       self.stringColour = stringcolour
-      self.sea = np.random.uniform(-1.0,1.0)
-      self.temp = np.random.uniform(-1.0,1.0)
+      self.sea = np.random.uniform(-0.3,0.3)
+      self.temp = np.random.uniform(-0.3,0.3)
       self.pop = np.random.uniform(0.0,1.0)
       self.tech = np.random.uniform(0.0,1.0)
       self.dSea = 0
@@ -31,11 +31,11 @@ class PlanetModel(object):
        else:
            optTemp = True
        if (self.sea > 0.65):
-           self.maxPop = 1 - ((self.sea - 0.65) * 2)
+           self.maxPop = 1 - ((self.sea - 0.65) / 1.35)
            self.dTemp -= (self.sea - 0.5) * 0.0000001
            optSea = False
        elif (self.sea < 0.35):
-           self.maxPop = 1 - ((0.35 - self.sea) * 2)
+           self.maxPop = 1 - ((0.35 - self.sea) / 1.35)
            self.dTemp += (self.sea - 0.5) * 0.0000001
            optSea = False
        else:

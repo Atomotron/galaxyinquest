@@ -11,8 +11,8 @@ from models import PlanetModel
 class Planet(object):
    '''A model of the evolution of a planet. Set to randomly increase and decrease parameters kind of like the stock market.'''
    REFRESH_TIME = 1000/2 # refresh no fewer than 2 times per second
-   TITLE_OFFSET = 140 # The distance above the planet that the title is drawn
-   STATUS_OFFSET_BELOW_TITLE = 10
+   TITLE_OFFSET = 150 # The distance above the planet that the title is drawn
+   STATUS_OFFSET_BELOW_TITLE = 20
    ENLIGHTENMENT_STATUS_FULL = Rect(90,0,62,15)
    ENLIGHTENMENT_STATUS_EMPTY = Rect(90,15,62,15)
    def __init__(self,universe,planet_sprite,pos,mass,radius):
@@ -222,6 +222,7 @@ class Universe(object):
       self.camera = np.array((0.0,0.0))
       self.camera_urgency = 1
       self.target_zoom = 1
+      self.target_reached = False
       self.target_camera = np.array((0.0,0.0))
       self.rect_offset = vfloat(self.wrapping_rect.size)/2 # To move the origin from the top left to the center of the screen
       self.age = 0
@@ -257,7 +258,7 @@ class Universe(object):
       if self.player.connected_planet:
          self.target_zoom = 1
          self.target_camera = self.player.connected_planet.pos
-         self.camera_urgency = 0.1
+         self.camera_urgency = 0.3
       else:
          min_x = min([o.pos[0] for o in self.camera_targets]) - self.MARGIN
          max_x = max([o.pos[0] for o in self.camera_targets]) + self.MARGIN
