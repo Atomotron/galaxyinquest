@@ -1,14 +1,15 @@
 #!/usr/bin/env python
+from sys import exit
+import itertools
 import pygame
 from pygame.locals import *
 import numpy as np
-from sys import exit
 import random
 from util import vfloor,vfloat
 import planet
 import widgets
 from models import PlanetModel
-import itertools
+import resources
 class Planet(object):
    PLANET_CONNECTION_RADIUS = 160 # How many units we can be off the surface of the planet for us to count as "orbiting"
    REFRESH_TIME = 1000/2 # refresh no fewer than 2 times per second
@@ -387,6 +388,28 @@ if __name__ == "__main__":
    screen_size = (1024,768)
    screen = pygame.display.set_mode(screen_size)
    clock = pygame.time.Clock()  
+   
+   res = resources.Resources(
+      screen,
+      images = {
+         'colormaps' : "img/terrain.png",
+         'biomemaps' : "img/planet.png",
+         'cityscapes' : "img/cityscapes.png",
+         'atmosphere_colormap' : "img/atmosphere_color.png",
+         'atmosphere' : "img/AtmosphereWhite.png",
+         'clouds' : "img/Clouds.png"
+      },
+      sounds = {
+         'bounce':"sounds/bounce_planet_short.ogg",
+         'warp_home':"sounds/error.ogg",
+         'fire':"sounds/deselect.ogg",
+         'empty':"sounds/bounce_border.ogg",
+      },
+      fonts = {
+         'small' : ("fonts/monodb_.ttf",16),
+         'big' : ("fonts/monodb_.ttf",24),
+      },
+   )
    
    planet_factory = planet.PlanetSpriteFactory(
       pygame.image.load("img/terrain.png").convert_alpha(),
