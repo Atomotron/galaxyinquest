@@ -8,7 +8,7 @@ from util import vfloor,vfloat
 import planet
 import widgets
 from NewPlanetModel import PlanetModel
-
+import itertools
 class Planet(object):
    PLANET_CONNECTION_RADIUS = 160 # How many units we can be off the surface of the planet for us to count as "orbiting"
    REFRESH_TIME = 1000/2 # refresh no fewer than 2 times per second
@@ -290,7 +290,7 @@ class Universe(object):
          Rect(0,20*7,20,20),
          Rect(0,20*8,20,20),
       ],
-      'g':[Rect(40*x,20*y+60,40,20) for x,y in zip(range(0,10),range(0,3))],
+      'g':[Rect(40*x,20*y+60,40,20) for x,y in itertools.product(list(range(0,10)),list(range(0,3)))],
       'b':[
          Rect(0,0,20,20),
          Rect(0,20,20,20),
