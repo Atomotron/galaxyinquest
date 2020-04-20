@@ -41,11 +41,11 @@ class SineModel(Model):
     GOOD_POP_ZONE = 0.25  # width around 0.5 pop for tech growth
 
     EVENT_DELTA = {  # dsea,dtemp,pop factor,dtech
-        'world_war': (0.0, 0.3, 0.05, 0.0),
-        'war': (0.0, 0.2, 0.5, 0.0),
-        'plauge': (0.0, 0.0, 1, 0.0),
-        'monsoon': (0.3, -0.0, 1, 0.0),
-        'sandstorm': (-0.3, 0.0, 1, 0.0),
+        'world_war': (0.0, 0.3, 0.50, 0.0),
+        'war': (0.0, 0.2, 0.2, 0.0),
+        'plauge': (0.0, 0.0, 0.8, 0.0),
+        'monsoon': (0.3, -0.0, 0.95, 0.0),
+        'sandstorm': (-0.3, 0.0 , 0.95 , 0.0),
     }
     EVENT_PERIOD = 4
 
@@ -63,18 +63,49 @@ class SineModel(Model):
         self.probability_plague = 0
         self.probability_monsoon = 0
         self.probability_sandstorm = 0
+        
     def create_event(self):
         # Probability of event happening (worldwar,war,plague,monsoon,sandstorm)
         event_prob = np.random.uniform(0, 1)
         self.event_timer += 1
-        if self.pop > 0.8 and self.event_timer > 20:
-            self.probability_world_war = 0.3
-            print("doing loop 1")
-            if event_prob < self.probability_world_war and self.pop > 0.8:
-                self.start_event("world_war")
-                print("doing loop2")
-                self.event_timer = 0
-            self.probability_world_war = 0
+        
+        
+        
+        
+        
+        if 0.75 < self.pop < 0.9 and self.event_timer > 30:
+            
+            self.probability_war = 0.001
+            if event_prob < self.probability_war :
+                self.start_event("war")
+                self.event_timer = 0 
+                
+            if self.pop > 0.8 and self.event_timer > 30:
+                self.probability_world_war = 0.0007
+                self.probability_plaque = 0.0007
+                event_prob2 = np.random.randint(0,2)
+                if event_prob < self.probability_world_war and event_prob2 == 0:
+                    self.start_event("world_war")
+                    self.event_timer = 0
+                if event_prob < self.probability_plague and event_prob2 == 1:
+                    self.start_event("plauge")
+                    self.event_timer = 0
+                    
+            
+        if self.sea > 0.5  and self.event_timer > 30:
+            self.probability_monsoon = 0.0008
+            if event_prob < self.probability_monsoon :
+                self.start_event("monsoon")
+                self.event_timer = 0 
+       
+        if self.sea <  - 0.5  and self.event_timer > 30:
+            self.probability_sandstorm = 0.0008
+            if event_prob < self.probability_sandstorm :
+                self.start_event("sandstorm")
+                self.event_timer = 0 
+       
+        
+            
     def tick(self, dt):
         ds = self.speed * dt
         self.create_event()
