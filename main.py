@@ -432,6 +432,7 @@ if __name__ == "__main__":
          'cityscapes' : "img/cityscapes.png",
          'atmosphere_colormap' : "img/atmosphere_color.png",
          'atmosphere' : "img/AtmosphereWhite.png",
+         'enlightened_atmosphere' : "img/EnlightenedAtmosphere.png",
          'clouds' : "img/Clouds.png",
          'ui'  : "img/ui.png",
          'background_base' : "img/nebula.jpg",
