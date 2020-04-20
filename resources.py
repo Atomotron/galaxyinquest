@@ -3,9 +3,11 @@ import pygame
 import random
 from sys import exit
 from pygame.locals import *
-from Bars import Bar
+from bars import Bar
 
 class Resources(object):
+   LOADING_BAR_HEIGHT = 32
+   FONT_HEIGHT = 32
    def __init__(self,screen,images,sounds,fonts):
       self.image_names = images
       self.sound_names = sounds
@@ -18,7 +20,9 @@ class Resources(object):
       to_load += [(name,images[name],'image') for name in images]
       to_load += [(name,fonts[name],'font') for name in fonts]
       barTest = Bar(screen,(300,250),(0),(218,165,32))
-      load = pygame.image.load("img/testbackground.png")
+      loading_screen = pygame.image.load("img/Backgrounds/canvas.png")
+      font = pygame.font.Font('fonts/LiberationSans-Regular.ttf', self.FONT_HEIGHT)
+      screen.blit(loading_screen,(0,0))
       
       # Skully: use pygame to load loading screen image assets here.
       # loading_screen = pygame.image.load(...)
@@ -35,14 +39,20 @@ class Resources(object):
          # progress ranges from 0.0 to slightly less than 1.0
          # we never want to show a full loading bar because when it's full, we move on and quit loading!
          progress = i / (len(to_load))
-         #color = (random.randint(0,255),int(progress*255),random.randint(0,255))
-         screen.fill((0,0,0))
-         print(progress)
-         barTest.update(progress)
-         
-         #print(color)
-         #screen.fill(color)
+         text = font.render("Loading "+name, True, (233,83,50))
+         text_pos = (0,screen.get_height() - self.FONT_HEIGHT - self.LOADING_BAR_HEIGHT)
+         screen.blit(text,text_pos)
+         pygame.draw.rect(
+            screen,
+            (233,83,50),
+            pygame.Rect(0,screen.get_height() - self.LOADING_BAR_HEIGHT,int(progress*screen.get_width()),self.LOADING_BAR_HEIGHT)
+         )
          pygame.display.update(screen.get_rect())
+         pygame.draw.rect(
+            screen,
+            (0,0,0),
+            text.get_rect().move(text_pos)
+         )
          # actually load the resource
          if kind == 'sound':
             self.sound[name] = pygame.mixer.Sound(filename)
