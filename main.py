@@ -286,15 +286,11 @@ class Universe(object):
    MARGIN = 100
    PACKAGE_RECTS = {
       'r':[
-         Rect(0,0,20,20),
-         Rect(0,20,20,20),
-         Rect(0,40,20,20),
+         Rect(0,20*6,20,20),
+         Rect(0,20*7,20,20),
+         Rect(0,20*8,20,20),
       ],
-      'g':[
-         Rect(0,0,20,20),
-         Rect(0,20,20,20),
-         Rect(0,40,20,20),
-      ],
+      'g':[Rect(40*x,20*y,40,20) for x,y in zip(range(0,10),range(0,3))],
       'b':[
          Rect(0,0,20,20),
          Rect(0,20,20,20),
@@ -390,7 +386,8 @@ if __name__ == "__main__":
    pygame.init()
    screen_size = (1024,768)
    screen = pygame.display.set_mode(screen_size)
-   clock = pygame.time.Clock()
+   clock = pygame.time.Clock()  
+   
    planet_factory = planet.PlanetSpriteFactory(
       pygame.image.load("img/terrain.png").convert_alpha(),
       pygame.image.load("img/planet.png").convert_alpha(),
@@ -408,7 +405,7 @@ if __name__ == "__main__":
       pygame.image.load("img/shadow_outline.png").convert_alpha(),
       (font,font_big),
       ui_sheet,
-      pygame.image.load("img/H20.png").convert_alpha(),
+      pygame.image.load("img/packages.png").convert_alpha(),
    )
    universe.populate()
    Player(
