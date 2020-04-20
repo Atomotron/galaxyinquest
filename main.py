@@ -75,7 +75,7 @@ class Player(object):
       (-5000,5000)
    )
    INVENTORY_CAPACITY = 1.0
-   SUCK_SPEED = 0.01
+   SUCK_SPEED = 0.0005
    def __init__(self,universe,spritesheet,rects,sounds,pos,angle=0,vel=(0,0),inventory={'r':0,'g':0,'b':0}):
       self.universe = universe
       self.sprites = {k:spritesheet.subsurface(rects[k]) for k in rects}
