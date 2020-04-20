@@ -197,17 +197,39 @@ class UI(object):
       if self.universe.player and self.universe.player.connected_planet:
          for p in self.planet_gui:
             p.visible = True
-         self.planet_bars['e'].value = self.universe.player.connected_planet.model.tech
-         self.planet_bars['r'].value = self.universe.player.connected_planet.model.temp/2 + 0.5
-         self.planet_bars['g'].value = self.universe.player.connected_planet.model.pop
-         self.planet_bars['b'].value = self.universe.player.connected_planet.model.sea/2 + 0.5
-         self.planet_bars['e'].pos = self.universe.player.connected_planet.pos
-         self.planet_bars['r'].pos = self.universe.player.connected_planet.pos
-         self.planet_bars['g'].pos = self.universe.player.connected_planet.pos
-         self.planet_bars['b'].pos = self.universe.player.connected_planet.pos
+         player = self.universe.player
+         planet = self.universe.player.connected_planet
+         model = planet.model
+         self.planet_bars['e'].value = min(1.0,max(0.0,(model.tech)))
+         self.planet_bars['r'].value = min(1.0,max(0.0,(model.temp/2 + 0.5)))
+         self.planet_bars['g'].value = min(1.0,max(0.0,(model.pop)))
+         self.planet_bars['b'].value = min(1.0,max(0.0,(model.sea/2 + 0.5)))
+         self.planet_bars['e'].pos = planet.pos
+         self.planet_bars['r'].pos = planet.pos
+         self.planet_bars['g'].pos = planet.pos
+         self.planet_bars['b'].pos = planet.pos
+         for k in 'rgb':
+            if self.planet_bars[k].activated and player.inventory[k] < player.INVENTORY_CAPACITY:
+               delta = 0
+               if k == 'r':
+                  new = max(-1.0,model.temp - dt*player.SUCK_SPEED)
+                  delta = new - model.temp
+                  model.temp = new
+               if k == 'g':
+                  new = max(0.0,model.pop - dt*player.SUCK_SPEED)
+                  delta = new - model.pop
+                  model.pop = new
+               if k == 'b':
+                  new = max(-1.0,model.sea - dt*player.SUCK_SPEED)
+                  delta = new - model.sea
+                  model.sea = new
+               player.inventory[k] = min(player.INVENTORY_CAPACITY, player.inventory[k] - delta)
       else:
          for p in self.planet_gui:
             p.visible = False
+      if self.universe.player:
+         for k in 'rgb':
+            self.cargo_bars[k].value = self.universe.player.inventory[k]
       if self.next_track_in <= 0:
          track = self.sequence.pop()
          self.sounds[track].play(fade_ms=3000)

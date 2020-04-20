@@ -74,7 +74,9 @@ class Player(object):
       (-5000,5000),
       (-5000,5000)
    )
-   def __init__(self,universe,spritesheet,rects,sounds,pos,angle=0,vel=(0,0)):
+   INVENTORY_CAPACITY = 1.0
+   SUCK_SPEED = 0.01
+   def __init__(self,universe,spritesheet,rects,sounds,pos,angle=0,vel=(0,0),inventory={'r':0,'g':0,'b':0}):
       self.universe = universe
       self.sprites = {k:spritesheet.subsurface(rects[k]) for k in rects}
       self.rects = rects
@@ -91,6 +93,7 @@ class Player(object):
       universe.things.append(self)
       universe.camera_targets.append(self)
       universe.player = self
+      self.inventory = inventory
          
    def gravity_at(self,pos):
       '''Computes the acceleration due to gravity due to a body.'''
