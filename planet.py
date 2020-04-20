@@ -211,18 +211,18 @@ class PlanetSprite(object):
       ))
 
 class PlanetSpriteFactory(object):
-   def __init__(self,res):
+   def __init__(self,color_sheet,biomes_sheet,city_spritesheet,atmosphere_colormap,atmosphere,clouds):
       self.biome_maps = [
-         BiomeMap(res.image['biomemaps'],pygame.Rect(i*BiomeMap.SHEET_SIZE,0,BiomeMap.SHEET_SIZE,BiomeMap.SHEET_SIZE))
-         for i in range(0,res.image['biomemaps'].get_width()//BiomeMap.SHEET_SIZE)
+         BiomeMap(biomes_sheet,pygame.Rect(i*BiomeMap.SHEET_SIZE,0,BiomeMap.SHEET_SIZE,BiomeMap.SHEET_SIZE))
+         for i in range(0,biomes_sheet.get_width()//BiomeMap.SHEET_SIZE)
       ]
       self.color_maps = [
-         ColorMap(res.image['colormaps'],pygame.Rect(i*ColorMap.SHEET_SIZE,0,ColorMap.SHEET_SIZE,ColorMap.SHEET_SIZE))
-         for i in range(0,res.image['colormaps'].get_width()//ColorMap.SHEET_SIZE)
+         ColorMap(color_sheet,pygame.Rect(i*ColorMap.SHEET_SIZE,0,ColorMap.SHEET_SIZE,ColorMap.SHEET_SIZE))
+         for i in range(0,color_sheet.get_width()//ColorMap.SHEET_SIZE)
       ]
-      self.city_spritesheet = res.image['cityscapes']
-      self.atmosphere = Atmosphere(res.image['atmosphere_colormap'],res.image['atmosphere'])
-      self.clouds = res.image['clouds']
+      self.city_spritesheet = city_spritesheet
+      self.atmosphere = Atmosphere(atmosphere_colormap,atmosphere)
+      self.clouds = clouds
    def make_planet(self,universe,pos,bindex=None,cindex=None):
       bindex = bindex or np.random.randint(1,len(self.biome_maps)) # start at 1 because 0 is my thing
       cindex = cindex or np.random.randint(0,len(self.color_maps))
