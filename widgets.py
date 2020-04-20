@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from sys import exit
+import pygame
 from pygame.locals import *
 from pygame import Rect
 import numpy as np
@@ -161,18 +163,22 @@ class InventoryBar(BarButton):
       return r.union(surface.blit(empty_sprite,empty_pos,empty_rect))
 
 class UI(object):
-   def __init__(self,universe,sounds,sheet):
-      self.sounds = sounds
+   def __init__(self,res,universe):
+      self.res = res
+      self.sounds = res.sound
       self.universe = universe
       self.universe.ui = self
-      self.sheet = sheet
+      self.sheet = res.image['ui']
       self.widgets = []
+      self.overlay_image = None
+      self.after_overlay = None
+      self.overlay_message = None
       # Create cargo bar
       self.cargo_bars = {}
       cargo_bar_pos = (1024 - 120,768-140)
       for i,c in enumerate('rgb'):
          self.cargo_bars[c] = InventoryBar(
-            self,(i*CARGO_RECTS['off_full_'+c].width+cargo_bar_pos[0],cargo_bar_pos[1]),sheet,sounds,
+            self,(i*CARGO_RECTS['off_full_'+c].width+cargo_bar_pos[0],cargo_bar_pos[1]),self.sheet,self.sounds,
             CARGO_RECTS['off_full_'+c],CARGO_RECTS['off_empty_'+c],CARGO_RECTS['on_full_'+c],CARGO_RECTS['on_empty_'+c],
             value=random.uniform(0,1),
          )
@@ -183,13 +189,13 @@ class UI(object):
       self.planet_bars = {}
       planet_bar_offset = (140,-50)
       self.planet_bars['e'] = PlanetBar(
-            self,(0,0),np.array(planet_bar_offset),sheet,sounds,
+            self,(0,0),np.array(planet_bar_offset),self.sheet,self.sounds,
             PLANET_RECTS['full_e'],PLANET_RECTS['empty_e'],PLANET_RECTS['full_e'],PLANET_RECTS['empty_e'],
             value=random.uniform(0,1),visible=False,responsive=False,
       )
       for i,c in enumerate('rgb'):
          self.planet_bars[c] = PlanetBar(
-            self,(0,0),np.array((0.0,25.0*i+25.0)+np.array(planet_bar_offset)),sheet,sounds,
+            self,(0,0),np.array((0.0,25.0*i+25.0)+np.array(planet_bar_offset)),self.sheet,self.sounds,
             PLANET_RECTS['off_full_'+c],PLANET_RECTS['off_empty_'+c],PLANET_RECTS['on_full_'+c],PLANET_RECTS['on_empty_'+c],
             value=random.uniform(0,1),visible=False,
             early_cut=34
@@ -216,7 +222,29 @@ class UI(object):
          elif event.type == KEYDOWN and event.key == K_SPACE:
             self.sounds['abusalehbreaks'].play()
    def draw(self,screen,camera):
-      return [r for r in [widget.draw(screen,camera) for widget in self.widgets] if r]
+      dirty = [r for r in [widget.draw(screen,camera) for widget in self.widgets] if r]
+      if self.overlay_image:
+         screen.blit(self.overlay_image,(0,0))
+         pygame.display.update(self.overlay_image.get_rect())
+         looping = True
+         while looping:
+            clock = pygame.time.Clock()
+            for event in pygame.event.get():
+               print(event)
+               if event.type == QUIT:
+                   pygame.quit()
+                   exit()
+               elif event.type == KEYDOWN and event.key == K_ESCAPE:
+                   pygame.quit()
+                   exit()
+               elif event.type == MOUSEBUTTONDOWN and event.button == 1:
+                  looping = False
+         self.overlay_image = None
+         if self.after_overlay:
+            self.after_overlay()
+         self.overlay_message = None
+         return self.overlay_image.get_rect()
+      return dirty
    def tick(self,dt):
       if self.universe.player and self.universe.player.connected_planet:
          for p in self.planet_gui:
@@ -264,4 +292,11 @@ class UI(object):
          self.next_track_in = 1000*60 * 4
       else:
          self.next_track_in -= dt
+   def overlay(self,name,after=None,message=None):
+      if name in self.res.image:
+         self.overlay_image = self.res.image[name]
+      else:
+         self.overlay_image = pygame.image.load(name).convert_alpha()
+      self.after_overlay = after
+      self.overlay_message = message
       

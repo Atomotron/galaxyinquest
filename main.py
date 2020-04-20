@@ -380,24 +380,28 @@ class Universe(object):
       touched_rects += more_dirty
       return touched_rects
    
+   def compute_target_camera(self):
+      min_x = min([o.pos[0] for o in self.camera_targets]) - self.MARGIN
+      max_x = max([o.pos[0] for o in self.camera_targets]) + self.MARGIN
+      min_y = min([o.pos[1] for o in self.camera_targets]) - self.MARGIN
+      max_y = max([o.pos[1] for o in self.camera_targets]) + self.MARGIN
+      self.target_zoom = min(
+         self.screen_rect.width/(max_x-min_x),
+         self.screen_rect.height/(max_y-min_y),
+         1 # Never zoom closer than 1
+      )
+      self.target_camera = np.array((
+         (max_x+min_x)/2,(max_y+min_y)/2
+      ))
+   
    def tick(self,dt):
+      
       if self.player.connected_planet:
          self.target_zoom = 1
          self.target_camera = self.player.connected_planet.pos
          self.camera_urgency = 0.3
       else:
-         min_x = min([o.pos[0] for o in self.camera_targets]) - self.MARGIN
-         max_x = max([o.pos[0] for o in self.camera_targets]) + self.MARGIN
-         min_y = min([o.pos[1] for o in self.camera_targets]) - self.MARGIN
-         max_y = max([o.pos[1] for o in self.camera_targets]) + self.MARGIN
-         self.target_zoom = min(
-            self.screen_rect.width/(max_x-min_x),
-            self.screen_rect.height/(max_y-min_y),
-            1 # Never zoom closer than 1
-         )
-         self.target_camera = np.array((
-            (max_x+min_x)/2,(max_y+min_y)/2
-         ))
+         self.compute_target_camera()
          self.camera_urgency = 0.4
       self.camera += (self.target_camera-self.camera)*self.CAMERA_SPEED*dt*self.camera_urgency
       self.zoom += (self.target_zoom-self.zoom)*self.CAMERA_SPEED*dt*self.camera_urgency
@@ -417,6 +421,9 @@ class Universe(object):
       self.add_planet((-300,300),20)
       self.add_planet((800,0),20)
       self.add_planet((-300,-300),20)
+      self.compute_target_camera()
+      self.zoom = self.target_zoom
+      self.camera = self.target_camera
 
 if __name__ == "__main__":
    pygame.mixer.pre_init(44100, -16, 2, 1024)
@@ -461,10 +468,11 @@ if __name__ == "__main__":
    )
    planet_factory = planet.PlanetSpriteFactory(res)
    universe = Universe(res,planet_factory)
-   universe.populate()
    Player(res,universe,(0,0),0,(0.0,0))
    pygame.mixer.Sound("sounds/space_ambient.ogg").play(loops=-1,fade_ms=1000)
-   ui = widgets.UI(universe,res.sound,res.image['ui'])
+   ui = widgets.UI(res,universe)
+   universe.populate()
+   ui.overlay('background_base')
    while True:
         dt = clock.tick(30)  # If we go faster than 60fps, stop and wait.
         for event in pygame.event.get():  # Get everything that's happening
