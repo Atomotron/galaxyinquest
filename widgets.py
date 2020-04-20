@@ -4,6 +4,21 @@ from pygame import Rect
 
 from util import vfloat,vfloor
 
+CARGO_BAR_RECTS = {
+   'off_full_r':Rect(0,12,30,112),
+   'off_full_g':Rect(30,12,30,112),
+   'off_full_b':Rect(60,12,30,112),
+   'off_empty_r':Rect(0,12+124,30,112),
+   'off_empty_g':Rect(30,12+124,30,112),
+   'off_empty_b':Rect(60,12+124,30,112),
+   'on_full_r':Rect(0,12,30,112),
+   'off_full_g':Rect(30,12+124*2,30,112),
+   'off_full_b':Rect(60,12+124*2,30,112),
+   'off_empty_r':Rect(0,12+124*3,30,112),
+   'off_empty_g':Rect(30,12+124*3,30,112),
+   'off_empty_b':Rect(60,12+124*3,30,112),
+}
+
 class BarButton(object):
    '''Combines a bar and a button in to one big honkin' class.'''
    ALPHA_CUTOFF = 0 # A pixel on the button sprite must have more than this much alpha to receive clicks
@@ -98,11 +113,12 @@ class BarButton(object):
             
 
 class UI(object):
-   def __init__(self,universe,sounds,button_sheet=None):
+   def __init__(self,universe,sounds,sheet=None):
       self.sounds = sounds
       self.universe = universe
-      self.button_sheet = button_sheet
+      self.sheet = sheet
       self.widgets = []
+      # Create cargo bar
    def handle_event(self,event):
       for widget in self.widgets:
          if widget.handle_event(event):
