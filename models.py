@@ -36,8 +36,8 @@ class SineModel(Model):
     TECH_SPEED = 0.01
 
     # The range of temp and sea values required for pop growth
-    GOOD_TEMP_ZONE = 0.3
-    GOOD_SEA_ZONE = 0.3
+    GOOD_TEMP_ZONE = 0.8
+    GOOD_SEA_ZONE = 0.8
     GOOD_POP_ZONE = 0.25  # width around 0.5 pop for tech growth
 
     EVENT_DELTA = {  # dsea,dtemp,pop factor,dtech
@@ -58,19 +58,23 @@ class SineModel(Model):
         )
         self.event_timer = 0
 
-    def create_event(self):
-        # Probability of event happening (worldwar,war,plague,monsoon,sandstorm)
         self.probability_world_war = 0
         self.probability_war = 0
         self.probability_plague = 0
         self.probability_monsoon = 0
         self.probability_sandstorm = 0
+    def create_event(self):
+        # Probability of event happening (worldwar,war,plague,monsoon,sandstorm)
         event_prob = np.random.uniform(0, 1)
-        if self.pop > 0.8:
-            self.probability_world_war = 0.9
-            if event_prob <= self.probability_world_war and self.pop > 0.8:
+        self.event_timer += 1
+        if self.pop > 0.8 and self.event_timer > 20:
+            self.probability_world_war = 0.3
+            print("doing loop 1")
+            if event_prob < self.probability_world_war and self.pop > 0.8:
                 self.start_event("world_war")
-
+                print("doing loop2")
+                self.event_timer = 0
+            self.probability_world_war = 0
     def tick(self, dt):
         ds = self.speed * dt
         self.create_event()
