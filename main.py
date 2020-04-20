@@ -7,7 +7,7 @@ import random
 from util import vfloor,vfloat
 import planet
 import widgets
-from NewPlanetModel import PlanetModel
+from models import PlanetModel
 import itertools
 class Planet(object):
    PLANET_CONNECTION_RADIUS = 160 # How many units we can be off the surface of the planet for us to count as "orbiting"
