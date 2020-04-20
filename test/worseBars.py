@@ -11,41 +11,39 @@ screen = pygame.display.set_mode((screenWidth,screenHeight))
 clock = pygame.time.Clock() 
 
 
-class Bar():    
-    def __init__(self,screen,pos,variable,color,maxPop=1.0):
-        self.maxPop = maxPop
 
+class Bar():
+    
+    def __init__(self,screen,pos,variable,color,barName,maxPop=1.0):
+        self.maxPop = maxPop
+        self.barName = barName
         self.screen = screen
         self.pos = pos
-        self.sizeX = 400
-        self.sizeY = 100
+        self.sizeX = 100
+        self.sizeY = 200
         self.variable = variable
         self.color = color
         self.height = 0
 
         
+   
         
     def update(self,dv):
 
         if((self.variable+dv) <= self.maxPop and (self.variable+dv) >=-1 ):
-            self.variable = dv
+            self.variable += dv
 
         if(self.variable > self.maxPop):
             self.variable = self.maxPop
 
-        newSize =  (self.sizeX * self.variable)
-        rect1 =(self.pos,(newSize,self.sizeY))
-        
-        pygame.draw.rect(self.screen,(52, 0, 13),(self.pos,(self.sizeX,self.sizeY)))
-        pygame.draw.rect(self.screen,(105,105,105),rect1, 10)
-
-        pygame.draw.rect(self.screen,self.color,rect1)
-
+        newSize =  (self.sizeY * self.variable)
+        pygame.draw.rect(self.screen,self.color,((self.pos[0],(self.pos[1]+(self.sizeY * (1-self.variable)))),(self.sizeX,newSize)))
         wow = "{:.0f}".format( self.variable * 100 )
-        outputText = str(wow)+ "%"    
-        font = pygame.font.Font('LiberationSans-Regular.ttf', 72)
+        outputText = str(self.barName) + ": %" + str(wow) 
+        
+        font = pygame.font.Font('LiberationSans-Regular.ttf', 12)
         text = font.render(outputText, True, (255,255,255))
-        screen.blit(text,(self.pos[0] + 450 , self.pos[1]+20))
+        screen.blit(text,(self.pos[0] + 10 , self.pos[1] + 250))
         
         
 
@@ -53,8 +51,6 @@ class Bar():
 
 if __name__ == "__main__":
     
-    barTest = Bar(screen,(300,250),(0),(218,165,32))
-
    
     while True:
   
@@ -67,7 +63,5 @@ if __name__ == "__main__":
                     pygame.quit()
                     exit()
   
-        screen.fill((0,0,0))
-        barTest.update(0.1)
         
         pygame.display.flip()
