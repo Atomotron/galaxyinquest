@@ -11,11 +11,13 @@ from models import PlanetModel
 class Planet(object):
    '''A model of the evolution of a planet. Set to randomly increase and decrease parameters kind of like the stock market.'''
    REFRESH_TIME = 1000/2 # refresh no fewer than 2 times per second
+   TITLE_OFFSET = 130 # The distance above the planet that the title is drawn
    def __init__(self,universe,planet_sprite,pos,mass,radius):
       self.universe = universe
       self.universe.things.append(self) # we want to receive ticks
       universe.gravitators.append(self)
       universe.camera_targets.append(self)
+      universe.sprites.append(self)
       self.planet_sprite = planet_sprite
       self.pos = pos
       self.mass = mass
@@ -23,6 +25,9 @@ class Planet(object):
       self.staleness = 0 # a counter for time
       self.refresh_time = 0
       self.model = PlanetModel()
+      self.name = planet.generate_name()
+      self.title_small = self.universe.fonts[0].render(self.name,True,(255,255,255))
+      self.title_large = self.universe.fonts[1].render(self.name,True,(255,255,255))
 
    def tick(self,dt):
       self.model.tick(dt)
@@ -35,15 +40,9 @@ class Planet(object):
       self.staleness += dt
 
    def draw(self,screen,camera):
-      return pygame.draw.circle(
-         screen,
-         (min(255,max(0,int(self.mass))),
-          min(255,max(0,int(self.mass*255))),
-          min(255,max(0,int(np.log(self.mass))))),
-         vfloor(camera.cam(self.pos)),
-         int(self.radius*camera.zoom),
-         1,
-      ).inflate(1,0) # return impacted pixels
+      title_pos = vfloor(camera.cam(self.pos-np.array((0.0,self.TITLE_OFFSET))))
+      title_pos = (title_pos[0]-self.title_small.get_width()//2,title_pos[1]-self.title_small.get_height()//2)
+      return screen.blit(self.title_small,title_pos)
 
 class Player(object):
    RADIUS = 32 # radius for physics purposes
@@ -68,6 +67,7 @@ class Player(object):
       self.initial_vel = vfloat(vel) # for teleporting home
       self.acc = np.array((0.0,0.0)) # we want to keep around last frame's acceleration for velocity verlet
       self.angle = angle
+      self.thrusting = False
       self.connected_planet = None # The planet we're within range of
       universe.sprites.append(self)
       universe.things.append(self)
@@ -84,9 +84,10 @@ class Player(object):
          g += self.G*gravitator.mass*r / r_mag_raised_to_three
       return g
    
-   @property
-   def thrusting(self):
-      return pygame.mouse.get_pressed()[0]
+   
+   def start_thrusting(self):
+      '''Called by the UI on a mousebuttondown after it has verified that you're not clicking a button.'''
+      self.thrusting = True
    
    @property
    def abu_saleh_breaking(self):
@@ -95,6 +96,7 @@ class Player(object):
    
    def thrust(self):
       '''Computes how much we should be thrusting based on our controls.'''
+      self.thrusting = self.thrusting and pygame.mouse.get_pressed()[0]
       if self.abu_saleh_breaking:
          return -self.vel*self.ABUSALEHBREAKS
       elif self.thrusting:
@@ -128,12 +130,14 @@ class Player(object):
          self.connected_planet = nearest_gravitator
       else:
          self.connected_planet = None
+         
    def warp_home(self):
       if self.pos[0] < self.BOUNDARIES[0][0] or self.pos[0] > self.BOUNDARIES[0][1] or \
          self.pos[1] < self.BOUNDARIES[1][0] or self.pos[1] > self.BOUNDARIES[1][1]:
          self.pos = self.initial_pos
          self.vel = self.initial_vel
          self.sounds['warp_home'].play()
+         
    def tick(self,dt):
       # Point at the mouse
       delta_to_mouse = self.universe.uncam(vfloat(pygame.mouse.get_pos())) - self.pos
@@ -183,7 +187,7 @@ class Player(object):
 class Universe(object):
    CAMERA_SPEED = 0.01 # The rate at which the camera approaches the target values
    MARGIN = 100
-   def __init__(self,planet_factory,background,shadow):
+   def __init__(self,planet_factory,background,shadow,fonts):
       self.planet_factory = planet_factory
       self.background = background
       self.wrapping_rect = background.get_rect() # if wrapping_rect is null, use the background rect
@@ -202,6 +206,7 @@ class Universe(object):
       self.target_camera = np.array((0.0,0.0))
       self.rect_offset = vfloat(self.wrapping_rect.size)/2 # To move the origin from the top left to the center of the screen
       self.age = 0
+      self.fonts = fonts
       
    def cam(self,pos):
       '''Adjusts a position to take in to account our camera and zoom.'''
@@ -271,10 +276,13 @@ if __name__ == "__main__":
       pygame.image.load("img/AtmosphereWhite.png").convert_alpha(),
       pygame.image.load("img/Clouds.png").convert_alpha(),
    )
+   font = pygame.font.Font("fonts/monodb_.ttf",24)
+   font_big = pygame.font.Font("fonts/monodb_.ttf",48)
    universe = Universe(
       planet_factory,
       pygame.image.load("img/nebula.jpg").convert(),
-      pygame.image.load("img/shadow_outline.png").convert_alpha()
+      pygame.image.load("img/shadow_outline.png").convert_alpha(),
+      (font,font_big),
    )
    universe.populate()
    Player(
