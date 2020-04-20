@@ -4,6 +4,7 @@ from pygame.locals import *
 import pygame.surfarray as surfarray
 import numpy as np
 
+
 class ColorMap(object):
    SHEET_SIZE = 128
    def __init__(self,sheet,rect):
