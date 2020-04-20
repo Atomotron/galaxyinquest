@@ -216,7 +216,7 @@ class UI(object):
                   delta = new - model.temp
                   model.temp = new
                if k == 'g':
-                  new = max(0.0,model.pop - dt*player.SUCK_SPEED)
+                  new = max(0.0,model.pop - dt*player.SUCK_SPEED/2)
                   delta = new - model.pop
                   model.pop = new
                if k == 'b':
