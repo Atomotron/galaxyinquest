@@ -356,7 +356,7 @@ class Universe(object):
       bg = self.background
       bg.blit(self.res.image['background_base'],(0,0))
       nebulae = [self.res.image['nebula'+str(i+1)] for i in range(5)]
-      for i in range(random.randrange(3,7)):
+      for i in range(random.randrange(4,6)):
          nebula = pygame.transform.rotozoom(
             random.choice(nebulae),
             random.uniform(0,360),
