@@ -3,7 +3,6 @@ import pygame
 import random
 from sys import exit
 from pygame.locals import *
-from Bars import Bar
 
 class Resources(object):
    def __init__(self,screen,images,sounds,fonts):
@@ -17,11 +16,8 @@ class Resources(object):
       to_load = [(name,sounds[name],'sound') for name in sounds]
       to_load += [(name,images[name],'image') for name in images]
       to_load += [(name,fonts[name],'font') for name in fonts]
-      barTest = Bar(screen,(300,250),(0),(218,165,32))
       
       # Skully: use pygame to load loading screen image assets here.
-      load = pygame.image.load("img/testbackground.png")
-      
       # loading_screen = pygame.image.load(...)
       for i,(name,filename,kind) in enumerate(to_load):
          # We have to check the events or else the OS will crash the game.
@@ -33,22 +29,12 @@ class Resources(object):
                 pygame.quit()
                 exit()
          # Skully: replace this for whatever you'd like to use to draw loading progress to the screen
-                
          # progress ranges from 0.0 to slightly less than 1.0
          # we never want to show a full loading bar because when it's full, we move on and quit loading!
-                
-                
-                
          progress = i / (len(to_load))
-         
-         
-         screen.fill((0,0,0))
-         print(progress)
-         barTest.update(progress)
-         
-         #color = (random.randint(0,255),int(progress*255),random.randint(0,255))
-         #print(color)
-         #creen.fill(color)
+         color = (random.randint(0,255),int(progress*255),random.randint(0,255))
+         print(color)
+         screen.fill(color)
          pygame.display.update(screen.get_rect())
          # actually load the resource
          if kind == 'sound':
@@ -57,10 +43,3 @@ class Resources(object):
             self.image[name] = pygame.image.load(filename).convert_alpha()
          elif kind == 'font':
             self.font[name] = pygame.font.Font(filename[0],filename[1])
-            
-            
-         pygame.display.flip()
-            
-            
-            
-
