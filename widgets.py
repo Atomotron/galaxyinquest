@@ -302,7 +302,7 @@ class UI(object):
          track = self.sequence.pop()
          self.sounds[track].play(fade_ms=3000)
          self.sequence.appendleft(track)
-         self.next_track_in = 1000*60 * 4
+         self.next_track_in = 1000*60 * random.uniform(3+1,3+4)
       else:
          self.next_track_in -= dt
    def overlay(self,name,after=None,message=None):
