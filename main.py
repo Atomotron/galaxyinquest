@@ -179,7 +179,7 @@ class Player(Physical):
       universe.sprites.append(self)
       universe.camera_targets.append(self)
       universe.player = self
-      self.inventory = inventory
+      self.inventory = dict(inventory)
       self.selected_slot = None
       self.fire_countdown = 0
       self.firing = False
