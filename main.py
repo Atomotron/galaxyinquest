@@ -423,13 +423,33 @@ class Universe(object):
       effects_to_remove = [effect for effect in self.effects if effect.tick(dt)]
       for effect in effects_to_remove:
          self.effects.remove(effect)
+      
+      # Check to see if we have won
+      finished_planets = [planet for planet in self.gravitators if planet.model.enlightened]
+      dead_planets = [planet for planet in self.gravitators if planet.model.pop <= 0.0]
+      if len(finished_planets) + len(dead_planets) == len(self.gravitators):
+         def next():
+            self.clear()
+            n = min(10,len(finished_planets) + 3)
+            self.populate(planets=n)
+         self.ui.overlay(
+            'end',
+            after = next,
+            message = "Dead Planets: {} of {}\nAscended Populations: {} of {}".format(
+               len(dead_planets),
+               len(self.gravitators),
+               len(finished_planets),
+               len(self.gravitators)
+            ),
+         )         
+      
       if self.ui: # Tick UI last
          self.ui.tick(dt)
          
    def add_planet(self,pos,mass):
       Planet(self.res,self,self.planet_factory.make_planet(self,pos),pos,mass,80)
 
-   def populate(self,planets = 9):
+   def populate(self,planets = 3):
       points = [np.array((0.0,0.0))]
       def point_good(point):
          for point2 in points:
@@ -473,6 +493,7 @@ if __name__ == "__main__":
          'packages'  :  "img/packages.png",
          'ship'   : "img/ship58h.png",
          'effects'   : "img/eventanimation.png",
+         'end'   : "img/tutorial/endgamestate.png",
       },
       sounds = {
          'bounce':"sounds/bounce_planet_short.ogg",
@@ -490,6 +511,7 @@ if __name__ == "__main__":
       fonts = {
          'small' : ("fonts/monodb_.ttf",16),
          'large' : ("fonts/monodb_.ttf",24),
+         'huge' : ("fonts/monodb_.ttf",64),
       },
    )
    planet_factory = planet.PlanetSpriteFactory(res)
