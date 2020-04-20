@@ -18,6 +18,7 @@ class Planet(object):
    STATUS_OFFSET_BELOW_TITLE = 20
    ENLIGHTENMENT_STATUS_FULL = Rect(90,0,62,15)
    ENLIGHTENMENT_STATUS_EMPTY = Rect(90,15,62,15)
+   EVENT_DELAY = 400 # time after event start before the effect actually happens on the planet
    def __init__(self,res,universe,planet_sprite,pos,mass,radius):
       self.universe = universe
       self.res = res
@@ -32,17 +33,36 @@ class Planet(object):
       self.radius = radius
       self.staleness = 0 # a counter for time
       self.refresh_time = 0
+      self.most_recent_parameters = (0,0,0,0)
       self.model = PlanetModel()
       self.name = planet.generate_name()
       self.title = self.res.font['large'].render(self.name,True,(255,255,255))
       
+      self.event_activation_timer = 0
+      self.queued_event = None
+   
+   def need_to_refresh(self):
+      s,t,p,e = self.most_recent_parameters
+      distance_squared = (s-self.model.sea)**2+(t-self.model.temp)**2+(p-self.model.pop)**2+(e-self.model.tech)**2
+      return distance_squared > 0.01
    def tick(self,dt):
       self.model.tick(dt)
+      if self.model.event_warnings and not self.queued_event:
+         self.queued_event = self.model.event_warnings.pop()
+         self.event_activation_timer = self.EVENT_DELAY
+         Effect(self.res,self.universe,self.pos,self.queued_event)
+      if self.event_activation_timer <= 0 and self.queued_event:
+         self.model.execute_event(self.queued_event)
+         self.queued_event = None
+      self.event_activation_timer -= dt
+               
+      
       # Update the sprite if we have gone too long without doing so
       self.planet_sprite.set_parameters(self.model.sea,self.model.temp,self.model.pop,self.model.tech)
-      if self.staleness > self.refresh_time:
+      if self.staleness > self.refresh_time or self.need_to_refresh():
          self.refresh_time = np.random.uniform(0.0,self.REFRESH_TIME)
          self.staleness = 0
+         self.most_recent_parameters = (self.model.sea,self.model.temp,self.model.pop,self.model.tech)
          self.planet_sprite.update()
       self.staleness += dt
 
@@ -383,8 +403,10 @@ class Universe(object):
       self.zoom += (self.target_zoom-self.zoom)*self.CAMERA_SPEED*dt*self.camera_urgency
       for thing in self.things:
          thing.tick(dt)
-      for effect in self.effects:
-         effect.tick(dt)
+         
+      effects_to_remove = [effect for effect in self.effects if effect.tick(dt)]
+      for effect in effects_to_remove:
+         self.effects.remove(effect)
       if self.ui: # Tick UI last
          self.ui.tick(dt)
          
@@ -416,6 +438,7 @@ if __name__ == "__main__":
          'shadow_outline' : "img/shadow_outline.png",
          'packages'  :  "img/packages.png",
          'ship'   : "img/ship58h.png",
+         'effects'   : "img/eventanimation.png",
       },
       sounds = {
          'bounce':"sounds/bounce_planet_short.ogg",

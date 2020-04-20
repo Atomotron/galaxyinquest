@@ -41,10 +41,10 @@ class SineModel(Model):
       'world_war' : (0.0,0.3,0.05,0.0),
       'war'       : (0.0,0.2,0.5,0.0),
       'plauge'    : (0.0,0.0,1,0.0),
-      'monsoon'   : (0.3,-0.3,1,0.0),
-      'sandstorm'   : (-0.3,0.3,1,0.0),
+      'monsoon'   : (0.3,-0.0,1,0.0),
+      'sandstorm'   : (-0.3,0.0,1,0.0),
    }
-   EVENT_PERIOD = 10
+   EVENT_PERIOD = 4
    def __init__(self):
       # Choose random starting values
       super().__init__(

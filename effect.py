@@ -21,21 +21,25 @@ class Effect(object):
       self.time = 0
       self.loops = loops
       self.pos = vfloat(pos)
+      universe.effects.add(self)
       
    @property
    def frame(self):
       return int(self.time/self.FRAME_TIME)
       
-   def tick(dt):
+   def tick(self,dt):
+      '''Returns true if the event should be removed.'''
       self.time += dt
       if self.frame >= len(self.frames):
          if self.loops > 0:
             self.loops -= 1
          if self.loops == 0: # if loops starts out negative we'll loop forever
-            universe.effects.remove(self)
+            return True
+      return False
          
-   def draw(self,screen,camera):
-      rect = self.frames[frame]
-      pos = vfloor(camera.cam(self.pos - vfloat(rect.size)))
+   def draw(self,surface,camera):
+      rect = self.frames[self.frame]
+      pos = vfloor(camera.cam(self.pos - vfloat(rect.size)/2))
       scaled_sprite = pygame.transform.rotozoom(self.sheet.subsurface(rect),0,camera.zoom)
+      pygame.draw.circle(surface,(255,255,0),vfloor(camera.cam(self.pos)),3)
       return surface.blit(scaled_sprite,pos)
