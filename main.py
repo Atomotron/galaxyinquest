@@ -83,8 +83,9 @@ class Planet(object):
       if self.status_surface:
          return r.union(screen.blit(
             self.status_surface,
-            (pos[0]-self.status_surface.get_width()//2,pos[1]-self.status_surface.get_height()//2-self.title.get_height()//2)
-         )
+            (pos[0]-self.status_surface.get_width()//2,
+             pos[1]-self.status_surface.get_height()//2-self.title.get_height()//2)
+         ))
       else:
          status_pos = (pos[0]-self.ENLIGHTENMENT_STATUS_FULL.width//2,pos[1]+self.STATUS_OFFSET_BELOW_TITLE)
          screen.blit(
