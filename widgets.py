@@ -40,7 +40,7 @@ class BarButton(object):
    '''Combines a bar and a button in to one big honkin' class.'''
    ALPHA_CUTOFF = 0 # A pixel on the button sprite must have more than this much alpha to receive clicks
    def __init__(self,ui,pos,sheet,off_full,off_empty,on_full,on_empty,
-   value=0.5,sound=None,vertical=True,visible=True,sticky=True,responsive=True,follow_camera=None,
+   value=0.5,sounds=None,vertical=True,visible=True,sticky=True,responsive=True,follow_camera=None,
    early_cut=0,mutually_exclusive=[]):
       self.ui = ui
       self.pos = pos
@@ -53,7 +53,7 @@ class BarButton(object):
       self.value = value
       self.responsive = responsive
       self.early_cut = early_cut # for when 100% full corresponds to a slice short of 100% of the full image
-      self.sound = sound
+      self.sounds = sounds
       self.mutually_exclusive = mutually_exclusive
       self.sticky = sticky
       self.activated = False
@@ -83,16 +83,19 @@ class BarButton(object):
       '''Returns true if we want to consume the event.'''
       if not self.responsive or not self.visible:
          return False
-      if (event.type == MOUSEBUTTONUP or event.type == MOUSEBUTTONDOWN) and event.button == 1:
+      if event.button != 1:
+         return False
+      if event.type == MOUSEBUTTONDOWN:
          if self.contains(event.pos):
-            if event.type == MOUSEBUTTONDOWN and not self.activated:
+            if not self.activated:
                self.activated = True
-               if self.sound: self.sound.play()
+               self.sounds['select'].play()
                for me in self.mutually_exclusive:
                   me.activated = False
-            elif event.type == MOUSEBUTTONUP and self.activated and not self.sticky:
-               self.activated = False
             return True
+      elif event.type == MOUSEBUTTONUP and self.activated and not self.sticky:
+         self.activated = False
+         return True
       return False
       
    def draw(self,surface,camera):
@@ -136,7 +139,10 @@ class BarButton(object):
          )
       r = surface.blit(full_sprite,full_pos,full_rect)
       return r.union(surface.blit(empty_sprite,empty_pos,empty_rect))
-            
+
+class PlanetBar(BarButton):
+   def __init__(self,ui,pos,sheet,sounds,off_full,off_empty,on_full,on_empty,early_cut=0,responsive=True,visible=False):
+      pass
 
 class UI(object):
    def __init__(self,universe,sounds,sheet):
@@ -152,7 +158,7 @@ class UI(object):
          self.cargo_bars[c] = BarButton(
             self,(i*CARGO_RECTS['off_full_'+c].width+cargo_bar_pos[0],cargo_bar_pos[1]),sheet,
             CARGO_RECTS['off_full_'+c],CARGO_RECTS['off_empty_'+c],CARGO_RECTS['on_full_'+c],CARGO_RECTS['on_empty_'+c],
-            value=random.uniform(0,1),sound=sounds['select'],
+            value=random.uniform(0,1),sounds=sounds,
          )
       self.cargo_bars['r'].mutually_exclusive = [self.cargo_bars['g'],self.cargo_bars['b']]
       self.cargo_bars['g'].mutually_exclusive = [self.cargo_bars['b'],self.cargo_bars['r']]
@@ -163,13 +169,13 @@ class UI(object):
       self.planet_bars['e'] = BarButton(
             self,(0,0),sheet,
             PLANET_RECTS['full_e'],PLANET_RECTS['empty_e'],PLANET_RECTS['full_e'],PLANET_RECTS['empty_e'],
-            value=random.uniform(0,1),sound=None,vertical=False,visible=False,sticky=False,responsive=False,follow_camera = np.array(planet_bar_offset),
+            value=random.uniform(0,1),sounds=sounds,vertical=False,visible=False,sticky=False,responsive=False,follow_camera = np.array(planet_bar_offset),
       )
       for i,c in enumerate('rgb'):
          self.planet_bars[c] = BarButton(
             self,(0,0),sheet,
             PLANET_RECTS['off_full_'+c],PLANET_RECTS['off_empty_'+c],PLANET_RECTS['on_full_'+c],PLANET_RECTS['on_empty_'+c],
-            value=random.uniform(0,1),sound=sounds['select'],vertical=False,visible=False,sticky=False,follow_camera = np.array((0.0,25.0*i+25.0)+np.array(planet_bar_offset)),
+            value=random.uniform(0,1),sounds=sounds,vertical=False,visible=False,sticky=False,follow_camera = np.array((0.0,25.0*i+25.0)+np.array(planet_bar_offset)),
             responsive = True,early_cut=34
          )
       self.planet_gui = [self.planet_bars[k] for k in self.planet_bars]
