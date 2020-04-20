@@ -3,6 +3,13 @@ import numpy as np
 
 class Model(object):
    DEFAULT_SPEED = 0.001 # dt multiplier
+   EVENT_DELTA = { # dsea,dtemp,dpop,dtech
+      'world_war' : (
+      'war'       : [Rect(160*i,160,160,160) for i in range(0,7)],
+      'plauge'    : [Rect(160*i,160*2,160,160) for i in range(0,7)],
+      'monsoon'   : [Rect(160*i,160*3,160,160) for i in range(0,7)],
+      'sandstorm'   : [Rect(160*i,160*4,160,160) for i in range(0,7)],
+   }   
    def __init__(self,sea=0.0,temp=0.0,pop=0.0,tech=0.0,speed=1):
       self.sea = sea
       self.temp = temp
@@ -10,8 +17,23 @@ class Model(object):
       self.tech = tech
       self.speed = speed*self.DEFAULT_SPEED
       self.enlightened = False
+      self.event_warnings = [] # A list of events that have yet to be acknowledged by the game engine
+   
    def tick(self,dt):
       pass
+   
+   def start_event(self,name):
+      '''Called by the model when we would like to trigger an event.'''
+      self.event_warnings.append(name)
+   
+   def execute_event(self,name):
+      '''Called by the game engine some time after start_event, when it is time
+         for the event to actually happen.'''
+      dsea,dtemp,dpop,dtech = self.EVENT_DELTA[name]
+      self.sea = self.sea+dsea
+      self.temp = self.temp+dtemp
+      self.pop = np.clip(self.pop+dpop,0,1)
+      self.tech = np.clip(self.tech+dtech,0,1)
 
 class SineModel(Model):
    SEA_SPEED = 0.1
@@ -50,8 +72,6 @@ class SineModel(Model):
              self.tech = 0
       if self.tech >= 1:
          self.enlightened = True
-      self.temp = np.clip(self.temp,-1,1)
-      self.sea = np.clip(self.sea, -1, 1)
       self.pop = np.clip(self.pop, 0, 1)
       self.tech = np.clip(self.tech, 0, 1)
 

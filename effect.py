@@ -12,6 +12,7 @@ class Effect(object):
       'war'       : [Rect(160*i,160,160,160) for i in range(0,7)],
       'plauge'    : [Rect(160*i,160*2,160,160) for i in range(0,7)],
       'monsoon'   : [Rect(160*i,160*3,160,160) for i in range(0,7)],
+      'sandstorm'   : [Rect(160*i,160*4,160,160) for i in range(0,7)],
    }
    def __init__(self,res,universe,pos,name,loops=1):
       self.sheet = res.image['effects']
