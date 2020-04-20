@@ -16,7 +16,8 @@ clock = pygame.time.Clock()
 
 class Bar():
     
-    def __init__(self,screen,pos,variable,color,barName):
+    def __init__(self,screen,pos,variable,color,barName,maxPop=1.0):
+        self.maxPop = maxPop
         self.barName = barName
         self.screen = screen
         self.pos = pos
@@ -25,15 +26,17 @@ class Bar():
         self.variable = variable
         self.color = color
         self.height = 0
-        self.increasing = False
+
         
    
         
     def update(self,dv):
 
-        if((self.variable+dv) <= 1 and (self.variable+dv) >=0 ):
+        if((self.variable+dv) <= self.maxPop and (self.variable+dv) >=0 ):
             self.variable += dv
 
+        if(self.variable > self.maxPop):
+            self.variable = self.maxPop
 
         newSize =  (self.sizeY * self.variable)
         pygame.draw.rect(self.screen,self.color,((self.pos[0],(self.pos[1]+(self.sizeY * (1-self.variable)))),(self.sizeX,newSize)))
@@ -57,10 +60,10 @@ if __name__ == "__main__":
     seaBar = Bar(screen,(550,300),sea,(255,255,0),"Sea")
     techBar = Bar(screen,(750,300),tech,(0,0,255),"Tech")
     
-    dTemp = 0.0
-    dPop = 0.000
-    dSea = 0.0
-    dTech = 0.0001
+    dTemp = 0
+    dPop = 0
+    dSea = 0
+    dTech = 0
     
     temp = tempBar.variable
     tech = techBar.variable
@@ -77,39 +80,30 @@ if __name__ == "__main__":
     
     while True:
 
+        dPop = (pop * (2.7**0.0001)) - pop 
+        dTemp += (pop - 0.5) * 0.0000001
+        dSea -= (temp - 0.5) * 0.0000001 
+        
         temp = tempBar.variable
         tech = techBar.variable
         pop = popBar.variable
         sea = seaBar.variable
-        
-        if tech > 0.8:
-            TempTechModifier = 0  
-        elif tech < 0.8:
-            TempTechModifier = (0.8 - tech) / 100
-            
-        if temp < 0.6 and temp > 0.4:
-            TechTempModifier = 0.001
-            PopTempModifier = 0.001
-            SeaTempModifier = 0
-        elif temp < 0.4:
-            TechTempModifier = -0.003
-            PopTempModifier = -0.003
-            SeaTempModifier = -0.001
-        elif temp > 0.6:
-            TechTempModifier = -0.003
-            PopTempModifier = -0.003
-            SeaTempModifier = +0.001
-                
-                
-        dTemp = (pop * 0.02) + TempTechModifier
-        dTech = 0.001 + TechTempModifier + (pop * 0.02)
-        dPop = 0.001 + PopTempModifier + PopSeaModifier + (tech * 0.02)
-        dSea = SeaTempModifier
-        
-   
-        print(sea)
-        
 
+         
+        
+        if(temp > 0.65 or temp < 0.35):
+            dPop = -dPop
+      
+        
+        if(sea > 0.65):
+            popBar.maxPop = 1-((sea - 0.65) * 2)
+            dTemp -= (sea-0.5) * 0.0000001
+        elif(sea < 0.35):
+            
+            popBar.maxPop = 1-((0.35 - sea) * 2)
+            dTemp += (sea-0.5) * 0.0000001
+        
+        
         clock.tick(60) 
         for event in pygame.event.get(): 
             if event.type == QUIT: 
