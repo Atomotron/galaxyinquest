@@ -138,7 +138,7 @@ class Atmosphere(object):
       self.canvas.blit(self.atmosphere,(0,0))
       self.canvas.blit(self.mult_canvas,(0,0),special_flags=BLEND_RGBA_MULT)
       if tech >= 1.0:
-         self.canvas.blit(self.enligtened_atmosphere,(0,0))
+         self.canvas.blit(self.enlightened_atmosphere,(0,0))
       scaled = pygame.transform.rotozoom(self.canvas,0,scale)
       center_pos = (pos[0]-scaled.get_width()//2,pos[1]-scaled.get_height()//2)
       return surface.blit(scaled,center_pos)
