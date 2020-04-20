@@ -189,6 +189,8 @@ class UI(object):
          elif event.type == MOUSEBUTTONUP and event.button == 1:
             self.sounds['engine'].fadeout(100)
             self.sounds['engine_stop'].play()
+         if event.type == MOUSEBUTTONDOWN and event.button == 3:
+            self.universe.player.start_firing()
          elif event.type == KEYDOWN and event.key == K_SPACE:
             self.sounds['abusalehbreaks'].play()
    def draw(self,screen,camera):
@@ -229,6 +231,8 @@ class UI(object):
             p.visible = False
       if self.universe.player:
          for k in 'rgb':
+            if self.cargo_bars[k].activated:
+               self.universe.player.selected_slot = k
             self.cargo_bars[k].value = self.universe.player.inventory[k]
       if self.next_track_in <= 0:
          track = self.sequence.pop()

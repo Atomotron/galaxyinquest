@@ -10,7 +10,7 @@ import widgets
 from NewPlanetModel import PlanetModel
 
 class Planet(object):
-   '''A model of the evolution of a planet. Set to randomly increase and decrease parameters kind of like the stock market.'''
+   PLANET_CONNECTION_RADIUS = 160 # How many units we can be off the surface of the planet for us to count as "orbiting"
    REFRESH_TIME = 1000/2 # refresh no fewer than 2 times per second
    TITLE_OFFSET = 150 # The distance above the planet that the title is drawn
    STATUS_OFFSET_BELOW_TITLE = 20
@@ -63,39 +63,19 @@ class Planet(object):
       )
       return r.union(self.ENLIGHTENMENT_STATUS_FULL.move(status_pos))
 
-class Player(object):
-   RADIUS = 32 # radius for physics purposes
+class Physical(object):
    G = 0.25 # The strength of the force of gravity
-   THRUST = 0.00025
    BOUNCE_DAMP = 0.6
-   ABUSALEHBREAKS = 0.005 # I will put this in properly tomorrow
-   BOUNCE_VOLUME = 0.5
-   PLANET_CONNECTION_RADIUS = 160 # How many units we can be off the surface of the planet for us to count as "orbiting"
-   BOUNDARIES = (
-      (-5000,5000),
-      (-5000,5000)
-   )
-   INVENTORY_CAPACITY = 1.0
-   SUCK_SPEED = 0.00025
-   def __init__(self,universe,spritesheet,rects,sounds,pos,angle=0,vel=(0,0),inventory={'r':0,'g':0,'b':0}):
+   def __init__(self,universe,pos,vel=(0.0,0.0),radius=0,on_hit=None):
       self.universe = universe
-      self.sprites = {k:spritesheet.subsurface(rects[k]) for k in rects}
-      self.rects = rects
-      self.sounds = sounds
       self.pos = vfloat(pos)
-      self.initial_pos = vfloat(pos)# for teleporting home
       self.vel = vfloat(vel)
-      self.initial_vel = vfloat(vel) # for teleporting home
-      self.acc = np.array((0.0,0.0)) # we want to keep around last frame's acceleration for velocity verlet
-      self.angle = angle
-      self.thrusting = False
-      self.connected_planet = None # The planet we're within range of
-      universe.sprites.append(self)
+      self.acc = np.array((0.0,0.0))
+      self.on_hit = on_hit
+      self.connected_planet = None
+      self.radius = radius
       universe.things.append(self)
-      universe.camera_targets.append(self)
-      universe.player = self
-      self.inventory = inventory
-         
+      
    def gravity_at(self,pos):
       '''Computes the acceleration due to gravity due to a body.'''
       g = np.array((0.0,0.0))
@@ -105,30 +85,10 @@ class Player(object):
          r_mag_raised_to_three = np.power(np.sum(np.square(r)),3/2)
          g += self.G*gravitator.mass*r / r_mag_raised_to_three
       return g
-   
-   
-   def start_thrusting(self):
-      '''Called by the UI on a mousebuttondown after it has verified that you're not clicking a button.'''
-      self.thrusting = True
-   
-   @property
-   def abu_saleh_breaking(self):
-      '''Determines whether or not we will need to take our car to abu saleh later today.'''
-      return pygame.key.get_pressed()[K_SPACE]
-   
-   def thrust(self):
-      '''Computes how much we should be thrusting based on our controls.'''
-      self.thrusting = self.thrusting and pygame.mouse.get_pressed()[0]
-      if self.abu_saleh_breaking:
-         return -self.vel*self.ABUSALEHBREAKS
-      elif self.thrusting:
-         return np.array((
-            self.THRUST*np.cos(self.angle),
-            self.THRUST*np.sin(self.angle),
-         ))         
-      else:
-         return np.array((0.0,0.0))
       
+   def thrust(self):
+      return np.array((0.0,0.0))
+   
    def collide(self):
       '''Check if we're inside a planet, and get us out if we are.'''
       nearest_r_mag = None
@@ -139,31 +99,20 @@ class Player(object):
          if not nearest_r_mag or nearest_r_mag > r_mag:
             nearest_gravitator = gravitator
             nearest_r_mag = r_mag
-         if r_mag < self.RADIUS+gravitator.radius:
+         if r_mag < self.radius+gravitator.radius:
             r_hat = r/r_mag
             v_dot_r_hat = np.sum(self.vel*r_hat)
-            if v_dot_r_hat > 0.1:
-               self.sounds['bounce'].set_volume(v_dot_r_hat*self.BOUNCE_VOLUME) # Quiet sound for tiny bounce
-               self.sounds['bounce'].play()
+            if self.on_hit:
+               self.on_hit(gravitator,v_dot_r_hat)
             v_proj_r_hat = v_dot_r_hat*r_hat # project velocity on to radial vector
             self.vel -= (2-self.BOUNCE_DAMP)*v_proj_r_hat # elastic colission
-            self.pos = gravitator.pos - r_hat*(self.RADIUS+gravitator.radius) # put us back on the surface
-      if nearest_r_mag < self.PLANET_CONNECTION_RADIUS+nearest_gravitator.radius:
+            self.pos = gravitator.pos - r_hat*(self.radius+gravitator.radius) # put us back on the surface
+      if nearest_r_mag < nearest_gravitator.PLANET_CONNECTION_RADIUS+nearest_gravitator.radius:
          self.connected_planet = nearest_gravitator
       else:
          self.connected_planet = None
-         
-   def warp_home(self):
-      if self.pos[0] < self.BOUNDARIES[0][0] or self.pos[0] > self.BOUNDARIES[0][1] or \
-         self.pos[1] < self.BOUNDARIES[1][0] or self.pos[1] > self.BOUNDARIES[1][1]:
-         self.pos = self.initial_pos
-         self.vel = self.initial_vel
-         self.sounds['warp_home'].play()
-         
+   
    def tick(self,dt):
-      # Point at the mouse
-      delta_to_mouse = self.universe.uncam(vfloat(pygame.mouse.get_pos())) - self.pos
-      self.angle = np.arctan2(delta_to_mouse[1],delta_to_mouse[0]) 
       # Collide with planets
       self.collide()
       # Update velocity
@@ -171,6 +120,111 @@ class Player(object):
       new_acc = self.gravity_at(self.pos) + self.thrust()
       self.vel = self.vel + 0.5*dt*(self.acc + new_acc)
       self.acc = new_acc # save acceleration for next frame
+      
+class Player(Physical):
+   RADIUS = 32 # radius for physics purposes
+   THRUST = 0.00025
+   ABUSALEHBREAKS = 0.005 # I will put this in properly tomorrow
+   BOUNCE_VOLUME = 0.5
+   BOUNDARIES = (
+      (-5000,5000),
+      (-5000,5000)
+   )
+   INVENTORY_CAPACITY = 1.0
+   SUCK_SPEED = 0.00025
+   FIRE_RATE = 200
+   FIRE_VEL = 0.3
+   BLOW_CHUNK = 0.1
+   def __init__(self,universe,spritesheet,rects,sounds,pos,angle=0,vel=(0,0),inventory={'r':0,'g':0,'b':0}):
+      super().__init__(universe,pos,vel,radius=self.RADIUS,on_hit = self.hit)
+      self.sprites = {k:spritesheet.subsurface(rects[k]) for k in rects}
+      self.rects = rects
+      self.sounds = sounds
+      self.initial_pos = vfloat(pos)# for teleporting home
+      self.initial_vel = vfloat(vel) # for teleporting home
+      self.angle = angle
+      self.thrusting = False
+      self.connected_planet = None # The planet we're within range of
+      universe.sprites.append(self)
+      universe.camera_targets.append(self)
+      universe.player = self
+      self.inventory = inventory
+      self.selected_slot = None
+      self.fire_countdown = 0
+      self.firing = False
+   
+   def start_thrusting(self):
+      '''Called by the UI on a mousebuttondown after it has verified that you're not clicking a button.'''
+      self.thrusting = True
+
+   def start_firing(self):
+      '''Called by the UI on a mousebuttondown after it has verified that you're not clicking a button.'''
+      self.firing = True
+      self.fire_countdown = 0
+
+   @property
+   def abu_saleh_breaking(self):
+      '''Determines whether or not we will need to take our car to abu saleh later today.'''
+      return pygame.key.get_pressed()[K_SPACE]
+   
+   def make_onhit(self):
+      k = self.selected_slot
+      new_amount = max(0,self.inventory[k] - self.BLOW_CHUNK*(0.5 if k=='g' else 1.0))
+      delta = new_amount-self.inventory[k]
+      self.inventory[k] = new_amount
+      def on_hit(obj,vdotr):
+         if k == 'r':
+            obj.model.temp += delta
+         if k == 'g':
+            obj.model.pop += delta
+         if k == 'b':
+            obj.model.sea += delta
+      return on_hit
+   
+   def fire(self,dt):
+      if not self.firing:
+         return
+      if self.fire_countdown < 0 and self.selected_slot:
+         self.fire_countdown = self.FIRE_RATE
+         if self.inventory[self.selected_slot] > 0:
+            self.sounds['fire'].play()
+            axis = np.array((np.cos(self.angle),np.sin(self.angle)))
+            Package(self.universe,'a',self.pos+axis*30,self.vel + axis*self.FIRE_VEL,radius=10,on_hit=self.make_onhit())
+         else:
+            self.sounds['empty'].play()
+      else:
+         self.fire_countdown -= dt
+   
+   def thrust(self):
+      '''Computes how much we should be thrusting based on our controls.'''
+      if self.abu_saleh_breaking:
+         return -self.vel*self.ABUSALEHBREAKS
+      elif self.thrusting:
+         return np.array((
+            self.THRUST*np.cos(self.angle),
+            self.THRUST*np.sin(self.angle),
+         ))         
+      else:
+         return np.array((0.0,0.0))
+   def hit(self,obj,v_dot_r_hat):
+      if v_dot_r_hat > 0.1:
+         self.sounds['bounce'].set_volume(v_dot_r_hat*self.BOUNCE_VOLUME) # Quiet sound for tiny bounce
+         self.sounds['bounce'].play() 
+   def warp_home(self):
+      if self.pos[0] < self.BOUNDARIES[0][0] or self.pos[0] > self.BOUNDARIES[0][1] or \
+         self.pos[1] < self.BOUNDARIES[1][0] or self.pos[1] > self.BOUNDARIES[1][1]:
+         self.pos = self.initial_pos
+         self.vel = self.initial_vel
+         self.sounds['warp_home'].play()
+         
+   def tick(self,dt): 
+      self.thrusting = self.thrusting and pygame.mouse.get_pressed()[0]
+      self.firing = self.firing and pygame.mouse.get_pressed()[2]
+      # Point at the mouse
+      delta_to_mouse = self.universe.uncam(vfloat(pygame.mouse.get_pos())) - self.pos
+      self.angle = np.arctan2(delta_to_mouse[1],delta_to_mouse[0]) 
+      self.fire(dt)
+      super().tick(dt)
       self.warp_home()
       
    def draw(self,screen,camera):
@@ -204,12 +258,33 @@ class Player(object):
          rotated_U,
          vfloor(pos - vfloat(rotated_U.get_size())/2)
       ))
-      
 
+class Package(Physical):
+   def __init__(self,universe,sprite_name,pos,vel,radius,on_hit=None):
+      super().__init__(universe,pos,vel,radius,on_hit = lambda obj,v_dot_r_hat: self.destroy_and_then(on_hit,obj,v_dot_r_hat))
+      self.universe.sprites.append(self)
+      self.rect = self.universe.PACKAGE_RECTS[sprite_name]
+   def destroy_and_then(self,next,obj,v_dot_r_hat):
+      self.universe.sprites.remove(self)
+      self.universe.things.remove(self)
+      if next:
+         next(obj,v_dot_r_hat)
+   def draw(self,screen,camera):
+      pos = vfloor(camera.cam(self.pos))
+      return pygame.draw.circle(
+         screen,
+         (255,255,255),
+         pos,
+         self.radius
+      )
+      
 class Universe(object):
    CAMERA_SPEED = 0.01 # The rate at which the camera approaches the target values
    MARGIN = 100
-   def __init__(self,planet_factory,background,shadow,fonts,ui_sheet):
+   PACKAGE_RECTS = {
+      'a':None
+   }
+   def __init__(self,planet_factory,background,shadow,fonts,ui_sheet,package_sheet):
       self.planet_factory = planet_factory
       self.background = background
       self.wrapping_rect = background.get_rect() # if wrapping_rect is null, use the background rect
@@ -231,6 +306,7 @@ class Universe(object):
       self.rect_offset = vfloat(self.wrapping_rect.size)/2 # To move the origin from the top left to the center of the screen
       self.age = 0
       self.fonts = fonts
+      self.package_sheet = package_sheet
       
    def cam(self,pos):
       '''Adjusts a position to take in to account our camera and zoom.'''
@@ -276,7 +352,7 @@ class Universe(object):
          self.target_camera = np.array((
             (max_x+min_x)/2,(max_y+min_y)/2
          ))
-         self.camera_urgency = 1
+         self.camera_urgency = 0.4
       self.camera += (self.target_camera-self.camera)*self.CAMERA_SPEED*dt*self.camera_urgency
       self.zoom += (self.target_zoom-self.zoom)*self.CAMERA_SPEED*dt*self.camera_urgency
       for thing in self.things:
@@ -314,7 +390,8 @@ if __name__ == "__main__":
       pygame.image.load("img/nebula.jpg").convert(),
       pygame.image.load("img/shadow_outline.png").convert_alpha(),
       (font,font_big),
-      ui_sheet
+      ui_sheet,
+      None
    )
    universe.populate()
    Player(
@@ -330,6 +407,8 @@ if __name__ == "__main__":
       {
          'bounce':pygame.mixer.Sound("sounds/bounce_planet_short.ogg"),
          'warp_home':pygame.mixer.Sound("sounds/error.ogg"),
+         'fire':pygame.mixer.Sound("sounds/deselect.ogg"),
+         'empty':pygame.mixer.Sound("sounds/bounce_border.ogg"),
       },
       (0,0),0,(0.0,0)
    )
