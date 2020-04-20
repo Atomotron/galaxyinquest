@@ -68,6 +68,6 @@ if __name__ == "__main__":
                     exit()
   
         screen.fill((0,0,0))
-        barTest.update(0.1)
+        barTest.update(0.001)
         
         pygame.display.flip()
