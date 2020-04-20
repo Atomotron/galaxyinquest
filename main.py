@@ -315,7 +315,7 @@ class Package(Physical):
       
 class Universe(object):
    CAMERA_SPEED = 0.01 # The rate at which the camera approaches the target values
-   MARGIN = 100
+   MARGIN = 200
    PACKAGE_RECTS = {
       'r':[
          Rect(0,20*6,20,20),
@@ -329,6 +329,7 @@ class Universe(object):
          Rect(0,40,20,20),
       ],
    }
+   PLANET_SPAWNING_DISTANCE = 300 # Minimum distance between planets
    def __init__(self,res,planet_factory):
       self.res = res
       self.planet_factory = planet_factory
@@ -336,12 +337,7 @@ class Universe(object):
       self.shadow = res.image['shadow_outline']
       self.scaled_shadow = self.shadow
       self.screen_rect = self.background.get_rect() # if wrapping_rect is null, use the background rect
-      self.sprites = [] # things that need to have draw(screen) called on them
-      self.things = [] # things that need to have tick(dt) called on them
-      self.gravitators = [] # things that create gravitational fields    
-      self.camera_targets = [] # Things that the camera should try to display
-      self.effects = set()
-      self.dirty_rects = [self.background.get_rect()] # patches of the background that will need to be redrawn
+      self.clear()
       self.player = None
       self.ui_sheet = res.image['ui']
       self.zoom = 1
@@ -351,8 +347,17 @@ class Universe(object):
       self.target_reached = False
       self.target_camera = np.array((0.0,0.0))
       self.rect_offset = vfloat(self.screen_rect.size)/2 # To move the origin from the top left to the center of the screen
-      self.age = 0
       self.skip_next_tick = False
+   
+   def clear(self):
+      self.age = 0
+      self.player = None
+      self.sprites = [] # things that need to have draw(screen) called on them
+      self.things = [] # things that need to have tick(dt) called on them
+      self.gravitators = [] # things that create gravitational fields    
+      self.camera_targets = [] # Things that the camera should try to display
+      self.effects = set()
+      self.dirty_rects = [self.background.get_rect()] # patches of the background that will need to be redrawn
       
    def cam(self,pos):
       '''Adjusts a position to take in to account our camera and zoom.'''
@@ -382,6 +387,10 @@ class Universe(object):
       return touched_rects
    
    def compute_target_camera(self):
+      if not self.camera_targets:
+         self.target_zoom = 1
+         self.target_camera = np.array((0.0,0.0))
+         return
       min_x = min([o.pos[0] for o in self.camera_targets]) - self.MARGIN
       max_x = max([o.pos[0] for o in self.camera_targets]) + self.MARGIN
       min_y = min([o.pos[1] for o in self.camera_targets]) - self.MARGIN
@@ -399,7 +408,7 @@ class Universe(object):
       if self.skip_next_tick:
          self.skip_next_tick = False
          return
-      if self.player.connected_planet:
+      if self.player and self.player.connected_planet:
          self.target_zoom = 1
          self.target_camera = self.player.connected_planet.pos
          self.camera_urgency = 0.3
@@ -420,10 +429,20 @@ class Universe(object):
    def add_planet(self,pos,mass):
       Planet(self.res,self,self.planet_factory.make_planet(self,pos),pos,mass,80)
 
-   def populate(self):
-      self.add_planet((-300,300),20)
-      self.add_planet((800,0),20)
-      self.add_planet((-300,-300),20)
+   def populate(self,planets = 3):
+      points = [np.array((0.0,0.0))]
+      def point_good(point):
+         for point2 in points:
+            if np.sum(np.square(point-point2)) < np.square(self.PLANET_SPAWNING_DISTANCE):
+               return False
+         return True
+      for i in range(planets):
+         done = False
+         while not done:
+            point = np.array((np.random.uniform(-1000,1000),np.random.uniform(-1000,1000)))
+            done = point_good(point)
+         self.add_planet(point,20)
+      Player(self.res,self,(0,0),0,(0.0,0))
       self.compute_target_camera()
       self.zoom = self.target_zoom
       self.camera = self.target_camera
@@ -471,7 +490,6 @@ if __name__ == "__main__":
    )
    planet_factory = planet.PlanetSpriteFactory(res)
    universe = Universe(res,planet_factory)
-   Player(res,universe,(0,0),0,(0.0,0))
    pygame.mixer.Sound("sounds/space_ambient.ogg").play(loops=-1,fade_ms=1000)
    ui = widgets.UI(res,universe)
    universe.populate()
@@ -495,5 +513,8 @@ if __name__ == "__main__":
                 exit()
             elif event.type == MOUSEBUTTONDOWN or event.type == MOUSEBUTTONUP or event.type == KEYDOWN:
                ui.handle_event(event)
+               if event.type == KEYDOWN and event.key == K_q:
+                  universe.clear()
+                  universe.populate()
         universe.tick(dt)
         pygame.display.update(universe.draw(screen)) # Only push out the stuff we changed to the OS
