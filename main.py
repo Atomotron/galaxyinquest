@@ -329,7 +329,7 @@ class Universe(object):
          Rect(0,40,20,20),
       ],
    }
-   PLANET_SPAWNING_DISTANCE = 1000 # Minimum distance between planets
+   PLANET_SPAWNING_DISTANCE = 500 # Minimum distance between planets
    def __init__(self,res,planet_factory):
       self.res = res
       self.planet_factory = planet_factory
@@ -429,7 +429,7 @@ class Universe(object):
    def add_planet(self,pos,mass):
       Planet(self.res,self,self.planet_factory.make_planet(self,pos),pos,mass,80)
 
-   def populate(self,planets = 3):
+   def populate(self,planets = 9):
       points = [np.array((0.0,0.0))]
       def point_good(point):
          for point2 in points:
@@ -438,10 +438,14 @@ class Universe(object):
          return True
       for i in range(planets):
          done = False
-         while not done:
+         for attempt in range(0,1000):
             point = np.array((np.random.uniform(-1000,1000),np.random.uniform(-1000,1000)))
-            done = point_good(point)
-         self.add_planet(point,20)
+            if point_good(point):
+               done = True
+               break
+         if done:
+            self.add_planet(point,20)
+            points.append(point)
       Player(self.res,self,(0,0),0,(0.0,0))
       self.compute_target_camera()
       self.zoom = self.target_zoom
