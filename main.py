@@ -57,7 +57,6 @@ class Planet(object):
          self.model.execute_event(self.queued_event)
          self.queued_event = None
       self.event_activation_timer -= dt
-               
       # Update our label if need be
       if self.model.status != self.most_recent_status:
          self.most_recent_status = self.model.status
@@ -65,7 +64,6 @@ class Planet(object):
             self.status_surface = None
          else:
             self.status_surface = self.res.font['small'].render(self.model.status,True,(255,255,255))
-      
       # Update the sprite if we have gone too long without doing so
       self.planet_sprite.set_parameters(self.model.sea,self.model.temp,self.model.pop,self.model.tech)
       if self.staleness > self.refresh_time or self.need_to_refresh():
@@ -84,7 +82,7 @@ class Planet(object):
          return r.union(screen.blit(
             self.status_surface,
             (pos[0]-self.status_surface.get_width()//2,
-             pos[1]-self.status_surface.get_height()//2-self.title.get_height()//2)
+             pos[1]-self.status_surface.get_height()//2+self.title.get_height()//2)
          ))
       else:
          status_pos = (pos[0]-self.ENLIGHTENMENT_STATUS_FULL.width//2,pos[1]+self.STATUS_OFFSET_BELOW_TITLE)

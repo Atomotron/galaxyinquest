@@ -73,13 +73,7 @@ class SineModel(Model):
         # Probability of event happening (worldwar,war,plague,monsoon,sandstorm)
         event_prob = np.random.uniform(0, 1)
         self.event_timer += 1
-        
-        
-        
-        
-        
         if 0.75 < self.pop < 0.9 and self.event_timer > 30:
-            
             self.probability_war = 0.001
             if event_prob < self.probability_war :
                 self.start_event("war")
@@ -111,7 +105,7 @@ class SineModel(Model):
                 self.event_timer = 0
                 self.status = "Sandstorm"
         if self.temp > 0.5  and self.event_timer > 30:
-            self.probability_wildfire = 0.0008
+            self.probability_wildfire = 0.08
             if event_prob < self.probability_wildfire :
                 self.start_event("wildfire")
                 self.event_timer = 0
@@ -128,9 +122,9 @@ class SineModel(Model):
         self.create_event()
         if self.status != "":
            self.status_timer += dt
-        if self.status_timer == 1000:
+        if self.status_timer >= 3000:
            self.status_timer = 0
-           self.status = ""
+           self.status = "Enlightened" if self.enlightened else ""
         # Maybe start an event
         # if self.event_timer > self.EVENT_PERIOD:
         #   self.event_timer = 0
