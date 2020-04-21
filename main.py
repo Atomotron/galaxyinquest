@@ -573,6 +573,8 @@ if __name__ == "__main__":
          'huge' : ("fonts/monodb_.ttf",64),
       },
    )
+   res.sound['radio'].set_volume(0.0)
+   res.sound['radio'].play(loops=-1)
    planet_factory = planet.PlanetSpriteFactory(res)
    universe = Universe(res,planet_factory)
    pygame.mixer.Sound("sounds/space_ambient.ogg").play(loops=-1,fade_ms=1000)
