@@ -74,7 +74,7 @@ class SineModel(Model):
         event_prob = np.random.uniform(0, 1)
         self.event_timer += 1
         if 0.75 < self.pop < 0.9 and self.event_timer > 30:
-            self.probability_war = 0.003
+            self.probability_war = 0.004
             if event_prob < self.probability_war :
                 self.start_event("war")
                 self.event_timer = 0 
@@ -93,25 +93,25 @@ class SineModel(Model):
                     self.status = "Plague"
             
         if self.sea > 0.5  and self.event_timer > 30:
-            self.probability_monsoon = 0.003
+            self.probability_monsoon = 0.004
             if event_prob < self.probability_monsoon :
                 self.start_event("monsoon")
                 self.event_timer = 0
                 self.status = "Monsoon"
         if self.sea <  - 0.5  and self.event_timer > 30:
-            self.probability_sandstorm = 0.003
+            self.probability_sandstorm = 0.004
             if event_prob < self.probability_sandstorm :
                 self.start_event("sandstorm")
                 self.event_timer = 0
                 self.status = "Sandstorm"
         if self.temp > 0.5  and self.event_timer > 30:
-            self.probability_wildfire = 0.003
+            self.probability_wildfire = 0.004
             if event_prob < self.probability_wildfire :
                 self.start_event("wildfire")
                 self.event_timer = 0
                 self.status = "Wildfire"
         if self.temp < -0.5  and self.event_timer > 30:
-            self.probability_blizzard = 0.003
+            self.probability_blizzard = 0.004
             if event_prob < self.probability_blizzard :
                 self.start_event("blizzard")
                 self.event_timer = 0
