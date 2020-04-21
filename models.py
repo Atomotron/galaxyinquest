@@ -43,7 +43,7 @@ class SineModel(Model):
     EVENT_DELTA = {  # dsea,dtemp,pop factor,dtech
         'world_war': (0.0, 0.3, 0.5, 0.0),
         'war': (0.0, 0.2, 0.8, 0.0),
-        'plauge': (0.0, 0.0, 0.4, 0.0),
+        'plague': (0.0, 0.0, 0.4, 0.0),
         'monsoon': (0.3, 0.0, 0.90, 0.0),
         'sandstorm': (-0.3, 0.0 , 0.90 , 0.0),
         'blizzard'   : (0, -0.3 , 0.90 , 0.0),
@@ -79,20 +79,19 @@ class SineModel(Model):
             if event_prob < self.probability_war :
                 self.start_event("war")
                 self.event_timer = 0 
-                self.status = "War"
-            if self.pop > 0.8 and self.event_timer > 30:
-                self.probability_world_war = 0.001*area
-                self.probability_plaque = 0.001*area
-                event_prob2 = np.random.randint(0,2)
-                if event_prob < self.probability_world_war and event_prob2 == 0:
-                    self.start_event("world_war")
-                    self.event_timer = 0
-                    self.status = "World_War"
-                if event_prob < self.probability_plague and event_prob2 == 1:
-                    self.start_event("plauge")
-                    self.event_timer = 0
-                    self.status = "Plague"
-            
+                self.status = "War" 
+        if self.pop > 0.8 and self.event_timer > 30:
+            self.probability_world_war = 0.001*area
+            self.probability_plague = 0.001*area  
+            event_prob2 = np.random.randint(0,2)
+            if event_prob < self.probability_plague and event_prob2 == 0:
+                self.start_event("plague")
+                self.event_timer = 0
+                self.status = "Plague"
+            if event_prob < self.probability_world_war and event_prob2 == 1:
+                self.start_event("world_war")
+                self.event_timer = 0
+                self.status = "World_War"
         if self.sea > 0  and self.event_timer > 30:
             self.probability_monsoon = 0.004*area
             if event_prob < self.probability_monsoon :

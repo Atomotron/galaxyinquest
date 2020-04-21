@@ -10,7 +10,7 @@ class Effect(object):
    RECTS = {
       'world_war' : [Rect(160*i,0,160,160) for i in range(0,7)],
       'war'       : [Rect(160*i,160,160,160) for i in range(0,7)],
-      'plauge'    : [Rect(160*i,160*2,160,160) for i in range(0,7)],
+      'plague'    : [Rect(160*i,160*2,160,160) for i in range(0,7)],
       'monsoon'   : [Rect(160*i,160*3,160,160) for i in range(0,7)],
       'sandstorm'   : [Rect(160*i,160*4,160,160) for i in range(0,7)],
       'blizzard'   : [Rect(160*i,160*5,160,160) for i in range(0,7)],
