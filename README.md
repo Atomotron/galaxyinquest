@@ -16,3 +16,9 @@ Credits:
 - Physics and some coding - Cocohop
 - Coding and some physics - Skully
 - Writing the credits - (see commit history)
+
+Bugs fixed after release:
+- Wildfires and blizzards now heat and cool the planet, instead of cooling and heating it. (We got this backwards)
+- Enlightenment sound plays even when the game ends on the same frame.
+- Event frequency no longer varies with framerate.
+- Enlightenment may no longer progress when population is falling.
