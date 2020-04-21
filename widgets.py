@@ -265,7 +265,10 @@ class UI(object):
          planet = self.universe.player.connected_planet
          model = planet.model
          volume = 1.0-(np.sqrt(np.sum(np.square(player.pos-planet.pos)))-planet.radius)/(planet.PLANET_CONNECTION_RADIUS)
-         self.res.sound['radio'].set_volume(min(1.0,max(0.0,volume*(max(0.0,model.tech-0.5)*model.pop*2.0))))
+         self.res.sound['radio'].set_volume(
+            min(1.0,max(0.0,
+            volume*(max(0.0,model.tech-0.5)*model.pop*2.0)
+         )))
          self.planet_bars['e'].value = min(1.0,max(0.0,(model.tech)))
          self.planet_bars['r'].value = min(1.0,max(0.0,(model.temp/2 + 0.5)))
          self.planet_bars['g'].value = min(1.0,max(0.0,(model.pop)))

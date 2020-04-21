@@ -44,10 +44,10 @@ class SineModel(Model):
         'world_war': (0.0, 0.3, 0.5, 0.0),
         'war': (0.0, 0.2, 0.8, 0.0),
         'plauge': (0.0, 0.0, 0.4, 0.0),
-        'monsoon': (0.3, -0.0, 0.90, 0.0),
+        'monsoon': (0.3, 0.0, 0.90, 0.0),
         'sandstorm': (-0.3, 0.0 , 0.90 , 0.0),
-        'blizzard'   : (0, 0.3 , 0.90 , 0.0),
-        'wildfire'   : (0, -0.3 , 0.90 , 0.0),
+        'blizzard'   : (0, -0.3 , 0.90 , 0.0),
+        'wildfire'   : (0, 0.3 , 0.90 , 0.0),
     }
     EVENT_PERIOD = 4
     ENLIGHTENED_FIX_STRENGTH = 0.1
@@ -69,19 +69,20 @@ class SineModel(Model):
         self.probability_wildfire = 0
         self.status = ""
         self.status_timer = 0
-    def create_event(self):
+    def create_event(self,ds):
         # Probability of event happening (worldwar,war,plague,monsoon,sandstorm)
         event_prob = np.random.uniform(0, 1)
-        self.event_timer += 1
+        area = ds*5
+        self.event_timer += ds*100
         if 0.75 < self.pop < 0.9 and self.event_timer > 30:
-            self.probability_war = 0.004
+            self.probability_war = 0.004*area
             if event_prob < self.probability_war :
                 self.start_event("war")
                 self.event_timer = 0 
                 self.status = "War"
             if self.pop > 0.8 and self.event_timer > 30:
-                self.probability_world_war = 0.001
-                self.probability_plaque = 0.001
+                self.probability_world_war = 0.001*area
+                self.probability_plaque = 0.001*area
                 event_prob2 = np.random.randint(0,2)
                 if event_prob < self.probability_world_war and event_prob2 == 0:
                     self.start_event("world_war")
@@ -92,26 +93,26 @@ class SineModel(Model):
                     self.event_timer = 0
                     self.status = "Plague"
             
-        if self.sea > 0.5  and self.event_timer > 30:
-            self.probability_monsoon = 0.004
+        if self.sea > 0  and self.event_timer > 30:
+            self.probability_monsoon = 0.004*area
             if event_prob < self.probability_monsoon :
                 self.start_event("monsoon")
                 self.event_timer = 0
                 self.status = "Monsoon"
-        if self.sea <  - 0.5  and self.event_timer > 30:
-            self.probability_sandstorm = 0.004
+        if self.sea <  0  and self.event_timer > 30:
+            self.probability_sandstorm = 0.004*area
             if event_prob < self.probability_sandstorm :
                 self.start_event("sandstorm")
                 self.event_timer = 0
                 self.status = "Sandstorm"
-        if self.temp > 0.5  and self.event_timer > 30:
-            self.probability_wildfire = 0.004
+        if self.temp > 0  and self.event_timer > 30:
+            self.probability_wildfire = 0.004*area
             if event_prob < self.probability_wildfire :
                 self.start_event("wildfire")
                 self.event_timer = 0
                 self.status = "Wildfire"
-        if self.temp < -0.5  and self.event_timer > 30:
-            self.probability_blizzard = 0.004
+        if self.temp < 0  and self.event_timer > 30:
+            self.probability_blizzard = 0.004*area
             if event_prob < self.probability_blizzard :
                 self.start_event("blizzard")
                 self.event_timer = 0
@@ -119,7 +120,7 @@ class SineModel(Model):
             
     def tick(self, dt):
         ds = self.speed * dt
-        self.create_event()
+        self.create_event(ds)
         if self.status != "":
            self.status_timer += dt
         if self.status_timer >= 3000:
@@ -128,6 +129,7 @@ class SineModel(Model):
            
         if self.status == "" and self.enlightened :
            self.status = "Enlightened"
+           
            
         # Maybe start an event
         # if self.event_timer > self.EVENT_PERIOD:
@@ -141,10 +143,11 @@ class SineModel(Model):
             if -self.GOOD_TEMP_ZONE < self.temp < self.GOOD_TEMP_ZONE and \
                     -self.GOOD_SEA_ZONE < self.sea < self.GOOD_SEA_ZONE:
                 self.pop += self.POP_SPEED * ds
+                if 0.5 - self.GOOD_POP_ZONE < self.pop < 0.5 + self.GOOD_POP_ZONE:
+                  self.tech += (1 - 0.5 + self.pop) * ds * self.TECH_SPEED
             else:
                 self.pop -= self.POP_SPEED * ds
-            if 0.5 - self.GOOD_POP_ZONE < self.pop < 0.5 + self.GOOD_POP_ZONE:
-                self.tech += (1 - 0.5 + self.pop) * ds * self.TECH_SPEED
+
             # Yeah this fixes a bug where there's only 1 guy and he keeps rebuilding society lol
             if self.pop <= 0.001:
                 self.pop = 0
@@ -152,6 +155,7 @@ class SineModel(Model):
                 self.tech = 0
         if self.tech >= 1:
             self.enlightened = True
+            self.status = "Enlightened"
             self.sea -= self.sea*ds*self.ENLIGHTENED_FIX_STRENGTH
             self.temp -= self.temp*ds*self.ENLIGHTENED_FIX_STRENGTH
         self.pop = np.clip(self.pop, 0, 1)
