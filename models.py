@@ -41,13 +41,13 @@ class SineModel(Model):
     GOOD_POP_ZONE = 0.25  # width around 0.5 pop for tech growth
 
     EVENT_DELTA = {  # dsea,dtemp,pop factor,dtech
-        'world_war': (0.0, 0.3, 0.50, 0.0),
-        'war': (0.0, 0.2, 0.2, 0.0),
-        'plauge': (0.0, 0.0, 0.8, 0.0),
-        'monsoon': (0.3, -0.0, 0.95, 0.0),
-        'sandstorm': (-0.3, 0.0 , 0.95 , 0.0),
-        'blizzard'   : (0, 0.3 , 0.95 , 0.0),
-        'wildfire'   : (0, -0.3 , 0.95 , 0.0),
+        'world_war': (0.0, 0.3, 0.5, 0.0),
+        'war': (0.0, 0.2, 0.8, 0.0),
+        'plauge': (0.0, 0.0, 0.4, 0.0),
+        'monsoon': (0.3, -0.0, 0.90, 0.0),
+        'sandstorm': (-0.3, 0.0 , 0.90 , 0.0),
+        'blizzard'   : (0, 0.3 , 0.90 , 0.0),
+        'wildfire'   : (0, -0.3 , 0.90 , 0.0),
     }
     EVENT_PERIOD = 4
     ENLIGHTENED_FIX_STRENGTH = 0.1
@@ -74,14 +74,14 @@ class SineModel(Model):
         event_prob = np.random.uniform(0, 1)
         self.event_timer += 1
         if 0.75 < self.pop < 0.9 and self.event_timer > 30:
-            self.probability_war = 0.001
+            self.probability_war = 0.003
             if event_prob < self.probability_war :
                 self.start_event("war")
                 self.event_timer = 0 
                 self.status = "War"
             if self.pop > 0.8 and self.event_timer > 30:
-                self.probability_world_war = 0.0007
-                self.probability_plaque = 0.0007
+                self.probability_world_war = 0.001
+                self.probability_plaque = 0.001
                 event_prob2 = np.random.randint(0,2)
                 if event_prob < self.probability_world_war and event_prob2 == 0:
                     self.start_event("world_war")
@@ -93,25 +93,25 @@ class SineModel(Model):
                     self.status = "Plague"
             
         if self.sea > 0.5  and self.event_timer > 30:
-            self.probability_monsoon = 0.0008
+            self.probability_monsoon = 0.003
             if event_prob < self.probability_monsoon :
                 self.start_event("monsoon")
                 self.event_timer = 0
                 self.status = "Monsoon"
         if self.sea <  - 0.5  and self.event_timer > 30:
-            self.probability_sandstorm = 0.0008
+            self.probability_sandstorm = 0.003
             if event_prob < self.probability_sandstorm :
                 self.start_event("sandstorm")
                 self.event_timer = 0
                 self.status = "Sandstorm"
         if self.temp > 0.5  and self.event_timer > 30:
-            self.probability_wildfire = 0.08
+            self.probability_wildfire = 0.003
             if event_prob < self.probability_wildfire :
                 self.start_event("wildfire")
                 self.event_timer = 0
                 self.status = "Wildfire"
         if self.temp < -0.5  and self.event_timer > 30:
-            self.probability_blizzard = 0.0008
+            self.probability_blizzard = 0.003
             if event_prob < self.probability_blizzard :
                 self.start_event("blizzard")
                 self.event_timer = 0
@@ -125,6 +125,10 @@ class SineModel(Model):
         if self.status_timer >= 3000:
            self.status_timer = 0
            self.status = "Enlightened" if self.enlightened else ""
+           
+        if self.status == "" and self.enlightened :
+           self.status = "Enlightened"
+           
         # Maybe start an event
         # if self.event_timer > self.EVENT_PERIOD:
         #   self.event_timer = 0
