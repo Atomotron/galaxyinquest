@@ -9,10 +9,10 @@ To run it you need:
 
 Credits:
 
-Art - Ellen KG
-Sound Design - Zhohan
-Music - Trey
-UI and growth model stuff - Carl
-Physics and some coding - Cocohop
-Coding and some physics - Skully
-Writing the credits - (see commit history)
+- Art - Ellen KG
+- Sound Design - Zhohan
+- Music - Trey
+- UI and growth model stuff - Carl
+- Physics and some coding - Cocohop
+- Coding and some physics - Skully
+- Writing the credits - (see commit history)
