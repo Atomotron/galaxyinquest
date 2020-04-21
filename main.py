@@ -524,6 +524,7 @@ if __name__ == "__main__":
    pygame.mixer.pre_init(44100, -16, 2, 1024)
    pygame.init()
    screen_size = (1024,768)
+   pygame.display.set_caption("Planet Sitter - The Galactic Inquest")
    screen = pygame.display.set_mode(screen_size)
    clock = pygame.time.Clock()  
    res = resources.Resources(
