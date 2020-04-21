@@ -37,7 +37,6 @@ class Planet(object):
       self.model = PlanetModel()
       self.name = planet.generate_name()
       self.title = self.res.font['large'].render(self.name,True,(255,255,255))
-      
       self.event_activation_timer = 0
       self.queued_event = None
       self.most_recent_status = ""
@@ -59,6 +58,8 @@ class Planet(object):
       self.event_activation_timer -= dt
       # Update our label if need be
       if self.model.status != self.most_recent_status:
+         if self.model.status == "Enlightened":
+            self.res.sound['enlighten'].play()
          self.most_recent_status = self.model.status
          if not self.model.status:
             self.status_surface = None
@@ -562,6 +563,8 @@ if __name__ == "__main__":
          'select'  :  pygame.mixer.Sound("sounds/select.ogg"),
          'song1'  :  pygame.mixer.Sound("sounds/song1.ogg"),
          'song2'  :  pygame.mixer.Sound("sounds/song2.ogg"),
+         'enlighten':  pygame.mixer.Sound("sounds/ahhh.ogg"),
+         'radio': pygame.mixer.Sound("sounds/chatter_high.ogg")
       },
       fonts = {
          'small' : ("fonts/monodb_.ttf",16),

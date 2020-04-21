@@ -77,7 +77,9 @@ class BarButton(object):
       '''Returns true if we want to consume the event.'''
       if not self.responsive or not self.visible:
          return False
-
+      if event.type == MOUSEBUTTONUP and self.activated and not self.sticky:
+         self.activated = False
+         return True
       if event.type == KEYDOWN:
           return False
       if event.button != 1:
@@ -90,9 +92,6 @@ class BarButton(object):
                for me in self.mutually_exclusive:
                   me.activated = False
             return True
-      elif event.type == MOUSEBUTTONUP and self.activated and not self.sticky:
-         self.activated = False
-         return True
       return False
       
    def draw(self,surface,camera):
