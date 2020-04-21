@@ -9,7 +9,7 @@ To run it you need:
 
 Credits:
 
-- Art - Ellen KG
+- Art, UI mockups, design iteration - Ellen KG
 - Sound Design - Zhohan
 - Music - Trey
 - UI and growth model stuff - Carl
