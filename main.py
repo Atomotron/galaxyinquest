@@ -366,6 +366,7 @@ class Universe(object):
       self.target_camera = np.array((0.0,0.0))
       self.rect_offset = vfloat(self.screen_rect.size)/2 # To move the origin from the top left to the center of the screen
       self.skip_next_tick = False
+      self.paused = False
    
    def render_background(self):
       bg = self.background
@@ -453,7 +454,7 @@ class Universe(object):
       ))
    
    def tick(self,dt):
-      if self.skip_next_tick:
+      if self.skip_next_tick or self.paused:
          self.skip_next_tick = False
          return
       if self.player and self.player.connected_planet:
@@ -603,5 +604,7 @@ if __name__ == "__main__":
                if event.type == KEYDOWN and event.key == K_q:
                   universe.clear()
                   universe.populate()
+               elif event.type == KEYDOWN and event.key == K_p:
+                  universe.paused = not universe.paused
         universe.tick(dt)
         pygame.display.update(universe.draw(screen)) # Only push out the stuff we changed to the OS
